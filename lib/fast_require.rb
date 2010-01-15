@@ -19,6 +19,12 @@ module FastRequire
     File.open(@@loc, 'wb'){|f| f.write Marshal.dump(@@require_locs)}  
   end
   
+  def self.clear!
+    require 'fileutils'
+    FileUtils.rm @@loc if File.exist? @@loc
+    @@require_locs.clear 
+  end
+  
   def require lib
     puts lib
     if a = @@require_locs[lib]

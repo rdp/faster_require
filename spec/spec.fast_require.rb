@@ -1,11 +1,16 @@
 raise if defined?(FastRequire)
 require 'sane'
 require 'spec/autorun'
-require_relative '../lib/fast_require.rb'
 
 $: << File.dirname(__FILE__)  
+load '../lib/fast_require.rb'
 
 describe "faster requires" do
+  
+  before do # each
+    FastRequire.clear!    
+    load '../lib/fast_require.rb'      
+  end
   
   def with_file(filename)
     FileUtils.touch filename + '.rb'
@@ -32,8 +37,9 @@ describe "faster requires" do
   it "should have a faster require method--faster, my friend, faster!"
   
   it "should save a file" do
+    FastRequire.clear!
     loc = File.expand_path('~/.ruby_fast_require_location')
-    FileUtils.rm loc
+    assert !File.exist?(loc)
     FastRequire.save
     assert File.exist?(loc)
   end
