@@ -25,16 +25,21 @@ module FastRequire
     if a = @@require_locs[lib]
       begin
         puts 'doing eval', a
-        eval File.open(a, 'rb') {|f| f.read} # binread
-        $LOADED_FEATURES << a
+        if a =~ /.so$/
+          original_non_cached_require a # not much we can do there...hmm...
+        else
+          eval File.open(a, 'rb') {|f| f.read} # binread
+          $LOADED_FEATURES << a
+        end        
       rescue => e
         debugger
         3
+        raise e
       end
     else
       old = $LOADED_FEATURES.dup
       puts lib.to_s      
-      if(originally_require lib)
+      if(original_non_cached_require lib)
         new = $LOADED_FEATURES - old
         @@require_locs[lib] = new.last      
       end# how could this fail, though?
@@ -49,7 +54,7 @@ module Kernel
   else
     @already_using_fast_require = true
   end
-  alias :originally_require :require
+  alias :original_non_cached_require :require
   include FastRequire   # overwrite require...
   alias :require :require_cached
 end

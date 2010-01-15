@@ -42,7 +42,6 @@ describe "faster requires" do
     end
   end
 
-
     require_relative '../lib/fast_require'
     before do # each
       ::FastRequire.clear!
@@ -59,7 +58,7 @@ describe "faster requires" do
 
     it "should require .so files still" do
       # ruby-prof gem
-      require 'ruby_prof' # .so
+      2.times { require 'ruby_prof' } # .so
     end
 
     it "should add them to $LOADED_FEATURES" do
