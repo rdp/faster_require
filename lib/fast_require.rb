@@ -1,3 +1,5 @@
+require 'sane' # for now...
+
 module FastRequire
 
   @@loc = File.expand_path('~/.ruby_fast_require_location')
@@ -29,20 +31,19 @@ module FastRequire
       return if @@already_loaded[a]
       @@already_loaded[a] = true
       if a =~ /.so$/
-        puts 'doing original require on full path'
+        pps 'doing original require on full path'
         original_non_cached_require a # not much we can do there...too bad...
       else
-        pss 'doing eval on ' + lib + '=>' + a
-        eval(File.open(a, 'rb') {|f| f.read}, TOPLEVEL_BINDING, a)
+        pps 'doing eval on ' + lib + '=>' + a
+        eval(File.open(a, 'rb') {|f| f.read}, TOPLEVEL_BINDING, a) # note the b here--this means it's reading .rb files as binary, which *typically* works--if it breaks re-save the offending file in binary mode...
         $LOADED_FEATURES << a        
       end      
     else
       old = $LOADED_FEATURES.dup
-      pps 'searching', lib.to_s      
       if(original_non_cached_require lib)
         new = $LOADED_FEATURES - old
         @@require_locs[lib] = new.last
-        pps 'found it:' + lib + '=>' + @@require_locs[lib]
+        pps 'found new loc:' + lib + '=>' + @@require_locs[lib]
         @@already_loaded[@@require_locs[lib]] = true
       end# how could this fail, though...
     end
