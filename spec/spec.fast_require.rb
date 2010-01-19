@@ -14,7 +14,7 @@ describe "faster requires" do
   before do
     FastRequire.clear_all!
     @old_length = $LOADED_FEATURES.length
-    
+    $b = 0
   end
 
   def with_file(filename = 'test')
@@ -39,15 +39,23 @@ describe "faster requires" do
       $b.should == 1      
     end
   end
-
+  
   it "should be faster" do
     Dir.chdir('files') do
       slow = Benchmark.realtime { assert system("#{OS.ruby_bin} slow.rb")}
       Benchmark.realtime { assert system("#{OS.ruby_bin} fast.rb")} # warmup
       fast = Benchmark.realtime { assert system("#{OS.ruby_bin} fast.rb")}
       pps 'fast', fast, 'slow', slow
-      assert fast*1.5 < slow
+      assert fast < slow
     end
+  end
+  
+  it "should work with large complex gem" do
+  	Dir.chdir('files') do
+  		assert(system("#{OS.ruby_bin} large.rb"))
+  		assert(system("#{OS.ruby_bin} large.rb"))
+  		assert(system("#{OS.ruby_bin} large.rb")) # 3rd time, too
+  	end
   end
 
   it "should cache when requires have already been done instead of calling require on them again"

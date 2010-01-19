@@ -1,3 +1,4 @@
+raise 'cannot defined FastRequire twice' if defined?(FastRequire)
 module FastRequire
 
   def self.setup
@@ -33,11 +34,13 @@ module FastRequire
   end
 
   def require_cached lib
+  	puts 'got require ' + lib if $DEBUG
+  	#debugger if lib =~ /regdeferred/
     if a = @@require_locs[lib]
       return if @@already_loaded[a]
       @@already_loaded[a] = true
       if a =~ /.so$/
-        puts 'doing original require on full path' if $DEBUG
+        puts 'doing original require on full path ' + a if $DEBUG
         original_non_cached_require a # not much we can do there...too bad...
       else
         puts 'doing eval on ' + lib + '=>' + a if $DEBUG
@@ -45,22 +48,46 @@ module FastRequire
         $LOADED_FEATURES << a        
       end      
     else
+      # handle a circular require of regdeferred => something -> loop { regdeferred.rb }
+      return if @@already_loaded[lib]
+      
       old = $LOADED_FEATURES.dup
-      if(original_non_cached_require lib)
+      if(original_non_cached_require lib )
         new = $LOADED_FEATURES - old
         
         found = new.last
         
         # incredibly, in 1.8.6, this doesn't actually have to be a full path
         if RUBY_VERSION < '1.9'
+        	# so discover the full path.
         	dir = $:.find{|path| File.exist?(path + '/' + found)}
         	found = dir + '/' + found
         end        
         puts 'found new loc:' + lib + '=>' + found if $DEBUG
-        @@require_locs[lib] = found
-        
-        @@already_loaded[@@require_locs[lib]] = true
-      end# how could this fail, though...
+        @@require_locs[lib] = found        
+        @@already_loaded[found] = true
+      else
+=begin this is still buggy...
+      	#@@already_loaded[lib] = true
+        # this probably failed [1.8.6 only?] like
+        # the first pass was require 'regdeferred'
+        # now it's require 'regdeferred.rb'
+        # which fails (or vice versa)
+        # so figure out why
+        # calc location, expand, map back
+        glob = '{' + $:.join(',') + '}'
+        if lib =~ /(.rb|.so)$/
+        	all = glob + "/#{lib}"
+        else
+          all = glob + "/#{lib}.{rb,so}"
+        end
+        all2 = Dir[all]
+        where_found = all2[0]
+        puts 'freaky found new loc:' + lib + '=>' + where_found if $DEBUG
+        @@require_locs[lib] = where_found
+        @@already_loaded[found] = true
+=end
+      end
     end
     
   end
