@@ -1,11 +1,8 @@
-require 'sane' # for now...
-
 module FastRequire
 
   @@loc = File.expand_path('~/.ruby_fast_require_location')
   if File.exist? (@@loc)
-    @@require_locs = Marshal.restore( File.open(@@loc, 'rb') {|f| f.read})
-    
+    @@require_locs = Marshal.restore( File.open(@@loc, 'rb') {|f| f.read})    
   else
     @@require_locs = {}
   end
@@ -31,10 +28,10 @@ module FastRequire
       return if @@already_loaded[a]
       @@already_loaded[a] = true
       if a =~ /.so$/
-        pps 'doing original require on full path'
+        puts 'doing original require on full path' if $DEBUG
         original_non_cached_require a # not much we can do there...too bad...
       else
-        pps 'doing eval on ' + lib + '=>' + a
+        puts 'doing eval on ' + lib + '=>' + a if $DEBUG
         eval(File.open(a, 'rb') {|f| f.read}, TOPLEVEL_BINDING, a) # note the b here--this means it's reading .rb files as binary, which *typically* works--if it breaks re-save the offending file in binary mode...
         $LOADED_FEATURES << a        
       end      
@@ -43,7 +40,7 @@ module FastRequire
       if(original_non_cached_require lib)
         new = $LOADED_FEATURES - old
         @@require_locs[lib] = new.last
-        pps 'found new loc:' + lib + '=>' + @@require_locs[lib]
+        puts 'found new loc:' + lib + '=>' + @@require_locs[lib] if $DEBUG
         @@already_loaded[@@require_locs[lib]] = true
       end# how could this fail, though...
     end
@@ -52,13 +49,15 @@ module FastRequire
 end
 
 module Kernel
+	
   if(defined?(@already_using_fast_require))
     raise 'cant require it twice...'
   else
     @already_using_fast_require = true
   end
+  
+  include FastRequire
+  # overwrite require...
   alias :original_non_cached_require :require
-  include FastRequire   # overwrite require...
-  alias :require :require_cached
+  alias :require :require_cached 
 end
-
