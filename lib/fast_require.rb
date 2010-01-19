@@ -1,6 +1,13 @@
 module FastRequire
 
-  @@loc = File.expand_path('~/.ruby_fast_require_location')
+  def self.setup
+    @@dir = File.expand_path('~/.fast_require_caches')
+    Dir.mkdir @@dir unless File.directory?(@@dir)    
+    @@loc = @@dir + '/' + RUBY_VERSION + '-' + RUBY_PLATFORM # hope this is specific enough...
+  end
+  
+  FastRequire.setup
+  
   if File.exist?(@@loc)
     @@require_locs = Marshal.restore( File.open(@@loc, 'rb') {|f| f.read})    
   else
@@ -17,10 +24,11 @@ module FastRequire
     File.open(@@loc, 'wb'){|f| f.write Marshal.dump(@@require_locs)}
   end
 
-  def self.clear!
+  def self.clear_all!
     require 'fileutils'
-    FileUtils.rm @@loc if File.exist? @@loc
+    FileUtils.rm_rf @@dir if File.exist? @@dir
     @@require_locs.clear
+    setup
   end
 
   def require_cached lib

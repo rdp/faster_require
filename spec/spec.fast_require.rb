@@ -1,15 +1,19 @@
-require 'faster_rubygems' if RUBY_VERSION < '1.9'
-require_relative '../lib/fast_require'
+require 'rubygems' if RUBY_VERSION < '1.9'
 require 'sane'
+require_relative '../lib/fast_require' # before spec...
+# unfortunately this doesn't help us since we clear before each test :P
 require 'spec/autorun'
 require 'benchmark'
-require 'spec/adapters/mock_frameworks/rspec'
 #require 'ruby-debug'
 
 #assert !defined?(FastRequire) # so that we can loadup our unit tests sanely, using the old way LOL.
 require_relative '../lib/fast_require'
 
 describe "faster requires" do
+
+  before do
+    FastRequire.clear_all!
+  end
 
   def with_file(filename = 'test')
     FileUtils.touch filename + '.rb'
@@ -24,7 +28,7 @@ describe "faster requires" do
     end
   end
 
-  it "should be able to go two deep, and once only" do
+  it "should be able to go two sub-requires deep, and not repeat" do
     Dir.chdir('files') do
       assert(require 'a_requires_b')
       assert !(require 'a_requires_b')
@@ -35,40 +39,23 @@ describe "faster requires" do
 
   it "should be faster" do
     Dir.chdir('files') do
-      #slow = Benchmark.realtime { system("#{OS.ruby_bin} slow.rb")}
-      #Benchmark.realtime { system("#{OS.ruby_bin} fast.rb")} # warmup
-      #fast = Benchmark.realtime { system("#{OS.ruby_bin} fast.rb")}
-      #pps 'fast', fast, 'slow', slow
-      #assert fast*2 < slow
+      slow = Benchmark.realtime { system("#{OS.ruby_bin} slow.rb")}
+      Benchmark.realtime { system("#{OS.ruby_bin} fast.rb")} # warmup
+      fast = Benchmark.realtime { system("#{OS.ruby_bin} fast.rb")}
+      pps 'fast', fast, 'slow', slow
+      assert fast*2 < slow
     end
   end
 
-  it "should not save if it hasn't changed"
   it "should cache when requires have already been done instead of calling require on them again"
-  it "should know which requires are currently active and avoid calling require on them again"
-
+  
   it "should have different based on $0"
-
-
-  it "should do two of the same requires" do
-    with_file('test') do
-      assert(require 'test')
-      assert(!(require 'test'))
-    end
-  end
-
-  before do # each
-    #FastRequire.clear!
-  end
-
-
-  it "should require files still" do
-    with_file('file1') { require 'file1'}
-  end
-
-  it "should require .so files still" do
+  it "should not save if it hasn't changed"
+  
+  it "should require .so files still, and only once" do
     # ruby-prof gem
     2.times { require 'ruby_prof' } # .so
+    RubyProf # should exist
   end
 
   it "should add them to $LOADED_FEATURES" do
@@ -81,15 +68,18 @@ describe "faster requires" do
     # maybe with and
   end
 
-  it "should have a faster require method--faster, my friend, faster!"
-
-  it "should save a file" do
-    #FastRequire.clear!
-    loc = File.expand_path('~/.ruby_fast_require_location')
-    assert !File.exist?(loc)
+  it "should save a file as a cache in a dir" do
+    loc = File.expand_path('~/.fast_require_caches')
+    FastRequire.clear_all!
+    assert Dir[loc + '/*'].length == 0 # all clear
     FastRequire.save
-    assert File.exist?(loc)
+    assert Dir[loc + '/*'].length > 0
   end
-
-  it "should override the gem method"
+  
+  it "should "
+  
+  it "should work with ascii files well" # most are binary, so...low prio
+  it "should cache the converted file, if that speeds things up"
+  
+  it "should override the gem method if that's helpful"
 end
