@@ -1,7 +1,7 @@
 module FastRequire
 
   @@loc = File.expand_path('~/.ruby_fast_require_location')
-  if File.exist? (@@loc)
+  if File.exist?(@@loc)
     @@require_locs = Marshal.restore( File.open(@@loc, 'rb') {|f| f.read})    
   else
     @@require_locs = {}
