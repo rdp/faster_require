@@ -1,3 +1,3 @@
 require 'rubygems'
 require 'spec/autorun'
-Spec
+a = Spec

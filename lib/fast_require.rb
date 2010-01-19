@@ -2,8 +2,9 @@ module FastRequire
 
   def self.setup
     @@dir = File.expand_path('~/.fast_require_caches')
+    
     Dir.mkdir @@dir unless File.directory?(@@dir)    
-    @@loc = @@dir + '/' + RUBY_VERSION + '-' + RUBY_PLATFORM # hope this is specific enough...
+    @@loc = @@dir + '/' + RUBY_VERSION + '-' + RUBY_PLATFORM + '-' + File.expand_path($0).gsub(/[\/:]/, '_') # hope this is specific enough...
   end
   
   FastRequire.setup
@@ -47,8 +48,17 @@ module FastRequire
       old = $LOADED_FEATURES.dup
       if(original_non_cached_require lib)
         new = $LOADED_FEATURES - old
-        @@require_locs[lib] = new.last
-        puts 'found new loc:' + lib + '=>' + @@require_locs[lib] if $DEBUG
+        
+        found = new.last
+        
+        # incredibly, in 1.8.6, this doesn't actually have to be a full path
+        if RUBY_VERSION < '1.9'
+        	dir = $:.find{|path| File.exist?(path + '/' + found)}
+        	found = dir + '/' + found
+        end        
+        puts 'found new loc:' + lib + '=>' + found if $DEBUG
+        @@require_locs[lib] = found
+        
         @@already_loaded[@@require_locs[lib]] = true
       end# how could this fail, though...
     end

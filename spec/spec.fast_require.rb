@@ -13,6 +13,8 @@ describe "faster requires" do
 
   before do
     FastRequire.clear_all!
+    @old_length = $LOADED_FEATURES.length
+    
   end
 
   def with_file(filename = 'test')
@@ -23,44 +25,46 @@ describe "faster requires" do
   
   it "should be able to go one deep" do
     Dir.chdir('files') do
-      assert require 'c'
+      assert require('c')
       assert !(require 'c')
     end
+    assert $LOADED_FEATURES.length == (@old_length + 1)
   end
 
   it "should be able to go two sub-requires deep, and not repeat" do
     Dir.chdir('files') do
-      assert(require 'a_requires_b')
+      assert(require('a_requires_b'))
       assert !(require 'a_requires_b')
       assert !(require 'a_requires_b')
-      $b.should == 1
+      $b.should == 1      
     end
   end
 
   it "should be faster" do
     Dir.chdir('files') do
-      slow = Benchmark.realtime { system("#{OS.ruby_bin} slow.rb")}
-      Benchmark.realtime { system("#{OS.ruby_bin} fast.rb")} # warmup
-      fast = Benchmark.realtime { system("#{OS.ruby_bin} fast.rb")}
+      slow = Benchmark.realtime { assert system("#{OS.ruby_bin} slow.rb")}
+      Benchmark.realtime { assert system("#{OS.ruby_bin} fast.rb")} # warmup
+      fast = Benchmark.realtime { assert system("#{OS.ruby_bin} fast.rb")}
       pps 'fast', fast, 'slow', slow
-      assert fast*2 < slow
+      assert fast*1.5 < slow
     end
   end
 
   it "should cache when requires have already been done instead of calling require on them again"
   
-  it "should have different based on $0"
   it "should not save if it hasn't changed"
   
   it "should require .so files still, and only once" do
     # ruby-prof gem
     2.times { require 'ruby_prof' } # .so
     RubyProf # should exist
+    assert $LOADED_FEATURES.length == (@old_length + 1)
   end
 
   it "should add them to $LOADED_FEATURES" do
-    with_file('file2') {require 'file2'}
+  	with_file('file2') {require 'file2'}
     assert ($LOADED_FEATURES.grep(/file2.rb/)).length > 0
+    assert $LOADED_FEATURES.length == (@old_length + 1)
   end
 
   it "should work with and without rubygems, esp. in 1.8" do
@@ -76,7 +80,17 @@ describe "faster requires" do
     assert Dir[loc + '/*'].length > 0
   end
   
-  it "should "
+  it "should have different caches based on the file being run" do
+   # that wouldn't help much at all for ruby-prof runs, but...we do what we can 
+   loc = File.expand_path('~/.fast_require_caches')
+   assert Dir[loc + '/*'].length == 0 # all clear
+   Dir.chdir('files') do
+   	  assert system("ruby -I../../lib d.rb")
+   	  assert system("ruby -I../../lib e.rb")   	
+   end
+   assert Dir[loc + '/*'].length == 2    
+   assert Dir[loc + '/*spec_files_d*'].length == 1 # use full path
+  end
   
   it "should work with ascii files well" # most are binary, so...low prio
   it "should cache the converted file, if that speeds things up"
