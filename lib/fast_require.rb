@@ -1,8 +1,7 @@
-raise 'cannot defined FastRequire twice' if defined?(FastRequire)
 module FastRequire
 
   def self.setup
-    @@dir = File.expand_path('~/.fast_require_caches')
+    @@dir = File.expand_path('~/.ruby_fast_require_cache')
     
     Dir.mkdir @@dir unless File.directory?(@@dir)    
     @@loc = @@dir + '/' + RUBY_VERSION + '-' + RUBY_PLATFORM + '-' + File.expand_path($0).gsub(/[\/:]/, '_') # hope this is specific enough...
