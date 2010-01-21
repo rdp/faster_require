@@ -43,7 +43,7 @@ module FastRequire
       return if @@already_loaded[a]
       @@already_loaded[a] = true
       if a =~ /.so$/
-        puts 'doing original require on full path ' + a if $DEBUG
+        puts 'doing original_non_cached_require on full path ' + a if $DEBUG
         original_non_cached_require a # not much we can do there...too bad...
       else
         puts 'doing eval on ' + lib + '=>' + a if $DEBUG
@@ -99,13 +99,29 @@ end
 module Kernel
 	
   if(defined?(@already_using_fast_require))
-    raise 'cant require it twice...'
+    raise 'cant yet require it twice...'
   else
     @already_using_fast_require = true
   end
   
   include FastRequire
-  # overwrite require...
+  # overwrite old require...
   alias :original_non_cached_require :require
   alias :require :require_cached 
+  private :require
+
 end
+
+=begin
+module Gem
+  class << self
+  alias :original_const_missing :const_missing
+  def const_missing *args
+    puts 'got const missing', args
+    original_const_missing *args
+  end
+end
+end
+    
+  
+=end

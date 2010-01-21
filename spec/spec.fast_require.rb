@@ -23,7 +23,7 @@ describe "faster requires" do
     FileUtils.rm filename + '.rb'
   end  
   
-  it "should be able to go one deep" do
+  it "should be able to do a single require" do
     Dir.chdir('files') do
       assert require('c')
       assert !(require 'c')
@@ -31,7 +31,7 @@ describe "faster requires" do
     assert $LOADED_FEATURES.length == (@old_length + 1)
   end
 
-  it "should be able to go two sub-requires deep, and not repeat" do
+  it "should be able to go two sub-requires deep" do
     Dir.chdir('files') do
       assert(require('a_requires_b'))
       assert !(require 'a_requires_b')
@@ -58,14 +58,11 @@ describe "faster requires" do
   	end
   end
 
-  it "should cache when requires have already been done instead of calling require on them again"
+  it "should not save cache file if it hasn't changed [?]"
   
-  it "should not save if it hasn't changed"
-  
-  it "should require .so files still, and only once" do
+  it "should require .so files still, and only load them once" do
     # ruby-prof gem
-    2.times { require 'ruby_prof' } # .so
-    RubyProf # should exist
+    2.times { require 'ruby_prof'; RubyProf } # .so
     assert $LOADED_FEATURES.length == (@old_length + 1)
   end
 
@@ -100,5 +97,6 @@ describe "faster requires" do
   it "should work with ascii files well" # most are binary, so...low prio
   it "should cache the converted file, if that speeds things up"
   
-  it "should override the gem method if that's helpful"
+  it "should override rubygems' require if rubygems is loaded after the fact...maybe by hooking to Gem::const_defined or something"
+  
 end
