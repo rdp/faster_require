@@ -81,7 +81,7 @@ describe "faster requires" do
   end
 
   it "should save a file as a cache in a dir" do
-    loc = File.expand_path('~/.fast_require_caches')
+    loc = File.expand_path('~/.ruby_fast_require_cache')
     FastRequire.clear_all!
     assert Dir[loc + '/*'].length == 0 # all clear
     FastRequire.save
@@ -90,7 +90,7 @@ describe "faster requires" do
   
   it "should have different caches based on the file being run" do
    # that wouldn't help much at all for ruby-prof runs, but...we do what we can 
-   loc = File.expand_path('~/.fast_require_caches')
+   loc = File.expand_path('~/.ruby_fast_require_cache')
    assert Dir[loc + '/*'].length == 0 # all clear
    Dir.chdir('files') do
    	  assert system("ruby -I../../lib d.rb")
