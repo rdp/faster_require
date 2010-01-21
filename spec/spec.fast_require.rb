@@ -15,6 +15,7 @@ describe "faster requires" do
     FastRequire.clear_all!
     @old_length = $LOADED_FEATURES.length
     $b = 0
+    @ruby = OS.ruby_bin
   end
 
   def with_file(filename = 'test')
@@ -97,6 +98,12 @@ describe "faster requires" do
   it "should work with ascii files well" # most are binary, so...low prio
   it "should cache the converted file, if that speeds things up"
   
-  it "should override rubygems' require if rubygems is loaded after the fact...maybe by hooking to Gem::const_defined or something"
+  it "should override rubygems' require if rubygems is loaded after the fact...maybe by hooking to Gem::const_defined or something" do
+    assert system(@ruby + " files/gem_after.rb")    
+  end
+  
+  it "should override rubygems' require if rubygems is loaded before the fact" do
+    assert system(@ruby + " files/gem_before.rb")    
+  end
   
 end
