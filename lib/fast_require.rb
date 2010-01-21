@@ -17,6 +17,10 @@ module FastRequire
   @@already_loaded = {}
   $LOADED_FEATURES.each{|loaded| @@already_loaded[loaded] = true}
 
+  def self.dir
+    @@dir
+  end
+
   at_exit {
     FastRequire.save
   }

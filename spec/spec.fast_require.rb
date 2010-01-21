@@ -80,24 +80,21 @@ describe "faster requires" do
     # maybe with and
   end
 
-  it "should save a file as a cache in a dir" do
-    loc = File.expand_path('~/.ruby_fast_require_cache')
-    FastRequire.clear_all!
-    assert Dir[loc + '/*'].length == 0 # all clear
+  it "should save a file as a cache in a dir" do    
+    assert Dir[FastRequire.dir + '/*'].length == 0 # all clear
     FastRequire.save
-    assert Dir[loc + '/*'].length > 0
+    assert Dir[FastRequire.dir + '/*'].length > 0
   end
   
   it "should have different caches based on the file being run" do
    # that wouldn't help much at all for ruby-prof runs, but...we do what we can 
-   loc = File.expand_path('~/.ruby_fast_require_cache')
-   assert Dir[loc + '/*'].length == 0 # all clear
+   assert Dir[FastRequire.dir + '/*'].length == 0 # all clear
    Dir.chdir('files') do
    	  assert system("ruby -I../../lib d.rb")
    	  assert system("ruby -I../../lib e.rb")   	
    end
-   assert Dir[loc + '/*'].length == 2    
-   assert Dir[loc + '/*spec_files_d*'].length == 1 # use full path
+   assert Dir[FastRequire.dir + '/*'].length == 2    
+   assert Dir[FastRequire.dir + '/*spec_files_d*'].length == 1 # use full path
   end
   
   it "should work with ascii files well" # most are binary, so...low prio
