@@ -15,7 +15,7 @@ describe "faster requires" do
     FastRequire.clear_all!
     @old_length = $LOADED_FEATURES.length
     $b = 0
-    @ruby = OS.ruby_bin
+    @ruby = OS.ruby_bin + " "
   end
 
   def with_file(filename = 'test')
@@ -107,6 +107,12 @@ describe "faster requires" do
   
   it "should override rubygems' require if rubygems is loaded before the fact" do
     ruby "files/gem_before.rb"    
+  end
+  
+  it "should throw if you require it twice" do
+    Dir.chdir('files') do
+      assert !system(@ruby + 'attempt_double_load.rb')
+    end
   end
   
 end
