@@ -77,22 +77,22 @@ module FastRequire
       else
         puts 'doing eval on ' + lib + '=>' + known_loc if $FAST_REQUIRE_DEBUG
         $LOADED_FEATURES << known_loc # *must*
-        eval(File.open(known_loc, 'rb') {|f| f.read}, TOPLEVEL_BINDING, known_loc) # note the b here--this means it's reading .rb files as binary, which *typically* works--if it breaks re-save the offending file in binary mode...
-        return true
+        return eval(File.open(known_loc, 'rb') {|f| f.read}, TOPLEVEL_BINDING, known_loc) || true # note the b here--this means it's reading .rb files as binary, which *typically* works--if it breaks re-save the offending file in binary mode, or file an issue on the tracker...
       end
     else
-      # handle a circular require of regdeferred => something -> loop { regdeferred.rb }
+      # we don't know the location--let Ruby's original require do the heavy lifting for us here
       old = $LOADED_FEATURES.dup
       if(original_non_cached_require lib)
+        # debugger might land here the first time you run a script and it doesn't have a require
+        # cached yet...
         new = $LOADED_FEATURES - old
         found = new.last
 
-        # incredibly, in 1.8.6, this doesn't always end up as set to a full path
+        # incredibly, in 1.8.6, this doesn't always get set to a full path
         if RUBY_VERSION < '1.9'
           if !File.file?(found)
-            # so discover the full path.
+            # discover the full path.
             dir = $:.find{|path| File.file?(path + '/' + found)}
-            puts "got dir as " + dir.to_s + " for " + found if $FAST_REQUIRE_DEBUG
             found = dir + '/' + found
           end
           found = File.expand_path(found);
@@ -103,9 +103,9 @@ module FastRequire
         return true
       else
         puts 'already loaded, apparently' + lib if $FAST_REQUIRE_DEBUG
-        # this probably failed like
+        # this probably was something like
         # the first pass was require 'regdeferred'
-        # now it's require 'regdeferred.rb'
+        # now it's a different require 'regdeferred.rb'
         # which fails (or vice versa)
         # so figure out why
         # calc location, expand, map back
@@ -123,12 +123,13 @@ module FastRequire
           #	raise 'not found' unless @@already_loaded[where_found] # should have already been set...I think...
         else
           if $FAST_REQUIRE_DEBUG
+            # happens for enumerator XXXX
             puts 'unable to infer' + lib
             puts $:
           end
         end
-        return false # XXXX check these return values
-      end      
+        return false # XXXX test all these return values
+      end
     end
   end
 
