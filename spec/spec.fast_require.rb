@@ -111,4 +111,11 @@ describe "faster requires" do
     end
   end
   
+  it "should force require 'abc' to not load file called exactly abc" do
+    Dir.chdir('files') do
+      ruby 'require_non_dot_rb_fails.rb'
+      ruby 'require_non_dot_rb_fails.rb' # should succeed
+    end
+  end
+  
 end

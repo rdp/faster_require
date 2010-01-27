@@ -20,16 +20,22 @@ module FastRequire
   end
   @@already_loaded = {}
 
-
+  # try to see where this file was loaded from, from $:
+  # partial_name might be abc.rb, or might be abc
   def self.guess_discover partial_name, add_dot_rb = false
     for dir in $:
       if File.file?(b = (dir + '/' + partial_name))
-        return File.expand_path(b)
+        
+        # make sure we require a file that has the right suffix, for sure
+        if (b[-3..-1] == '.rb')  || (b[-3..-1] == '.so')
+          return File.expand_path(b)
+        end
+        
       end
     end
     
-    if add_dot_rb
-      return guess_discover(partial_name + '.rb') || guess_discover(partial_name + '.so')
+    if add_dot_rb && (partial_name[-3..-1] != '.rb') && (partial_name[-3..-1] != '.so')
+      guess_discover(partial_name + '.rb') || guess_discover(partial_name + '.so')
     else
       nil
     end
