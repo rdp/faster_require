@@ -4,7 +4,11 @@ module FastRequire
     @@dir = File.expand_path('~/.ruby_fast_require_cache')
 
     Dir.mkdir @@dir unless File.directory?(@@dir)
-    @@loc = @@dir + '/' + RUBY_VERSION + '-' + RUBY_PLATFORM + '-' + File.expand_path($0).gsub(/[\/:]/, '_') # hope this is specific enough...
+    @@loc = @@dir + '/' + RUBY_VERSION + '-' + RUBY_PLATFORM + '-' + sanitize(File.expand_path($0).gsub(/[\/:]/, '_')) + sanitize(Dir.pwd)
+  end
+  
+  def self.sanitize filename
+    filename.gsub(/[\/:]/, '_')
   end
 
   FastRequire.setup

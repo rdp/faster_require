@@ -55,11 +55,11 @@ describe "faster requires" do
   	Dir.chdir('files') do
   		assert(system("#{OS.ruby_bin} large.rb"))
   		assert(system("#{OS.ruby_bin} large.rb"))
-  		assert(system("#{OS.ruby_bin} large.rb")) # 3rd time, too
+  		assert(system("#{OS.ruby_bin} large.rb"))
   	end
   end
 
-  it "should not save cache file if it hasn't changed [?]"
+  it "should not re-save the cache file if it hasn't changed [?]"
   
   it "should require .so files still, and only load them once" do
     # ruby-prof gem
@@ -67,15 +67,10 @@ describe "faster requires" do
     assert $LOADED_FEATURES.length == (@old_length + 1)
   end
 
-  it "should add them to $LOADED_FEATURES" do
+  it "should add requires to $LOADED_FEATURES" do
   	with_file('file2') {require 'file2'}
     assert ($LOADED_FEATURES.grep(/file2.rb/)).length > 0
     assert $LOADED_FEATURES.length == (@old_length + 1)
-  end
-
-  it "should work with and without rubygems, esp. in 1.8" do
-    # run these tests in 1.8...hmm...
-    # maybe with and
   end
 
   it "should save a file as a cache in a dir" do    
@@ -84,26 +79,34 @@ describe "faster requires" do
     assert Dir[FastRequire.dir + '/*'].length > 0
   end
   
-  it "should have different caches based on the file being run" do
+  it "should have different caches based on the file being run, and Dir.pwd" do
    # that wouldn't help much at all for ruby-prof runs, but...we do what we can 
    assert Dir[FastRequire.dir + '/*'].length == 0 # all clear
    Dir.chdir('files') do
    	  assert system("ruby -I../../lib d.rb")
-   	  assert system("ruby -I../../lib e.rb")   	
+   	  assert system("ruby -I../../lib e.rb")
+   	  assert system("ruby -C.. -I../lib files/e.rb")
    end
-   assert Dir[FastRequire.dir + '/*'].length == 2    
+   assert Dir[FastRequire.dir + '/*'].length == 3    
    assert Dir[FastRequire.dir + '/*spec_files_d*'].length == 1 # use full path
+   assert Dir[FastRequire.dir + '/*spec_files_e*'].length == 2 # different dirs
+  end
+    
+  context "should work with ascii files well" do # most are binary, so...low prio
+    it "could cache the converted file, if that speeds things up"
   end
   
-  it "should work with ascii files well" # most are binary, so...low prio
-  it "should cache the converted file, if that speeds things up"
+  private
+  def ruby filename
+    assert system(@ruby  + " " + filename)
+  end
   
   it "should override rubygems' require if rubygems is loaded after the fact...maybe by hooking to Gem::const_defined or something" do
-    assert system(@ruby + " files/gem_after.rb")    
+    ruby "files/gem_after.rb"
   end
   
   it "should override rubygems' require if rubygems is loaded before the fact" do
-    assert system(@ruby + " files/gem_before.rb")    
+    ruby "files/gem_before.rb"    
   end
   
 end
