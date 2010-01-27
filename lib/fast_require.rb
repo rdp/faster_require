@@ -69,7 +69,7 @@ module FastRequire
 
   def require_cached lib
     if known_loc = @@require_locs[lib]
-      return if @@already_loaded[known_loc]
+      return false if @@already_loaded[known_loc]
       @@already_loaded[known_loc] = true
       if known_loc =~ /.so$/
         puts 'doing original_non_cached_require on .so full path ' + known_loc if $FAST_REQUIRE_DEBUG
@@ -78,6 +78,7 @@ module FastRequire
         puts 'doing eval on ' + lib + '=>' + known_loc if $FAST_REQUIRE_DEBUG
         $LOADED_FEATURES << known_loc # *must*
         eval(File.open(known_loc, 'rb') {|f| f.read}, TOPLEVEL_BINDING, known_loc) # note the b here--this means it's reading .rb files as binary, which *typically* works--if it breaks re-save the offending file in binary mode...
+        return true
       end
     else
       # handle a circular require of regdeferred => something -> loop { regdeferred.rb }
@@ -99,6 +100,7 @@ module FastRequire
         puts 'found new loc:' + lib + '=>' + found if $FAST_REQUIRE_DEBUG
         @@require_locs[lib] = found
         @@already_loaded[found] = true
+        return true
       else
         puts 'already loaded, apparently' + lib if $FAST_REQUIRE_DEBUG
         # this probably failed like
@@ -125,7 +127,8 @@ module FastRequire
             puts $:
           end
         end
-      end
+        return false # XXXX check these return values
+      end      
     end
   end
 
