@@ -4,10 +4,6 @@ require_relative '../lib/fast_require' # before spec...
 # unfortunately this doesn't help us since we clear before each test :P
 require 'spec/autorun'
 require 'benchmark'
-#require 'ruby-debug'
-
-#assert !defined?(FastRequire) # so that we can loadup our unit tests sanely, using the old way LOL.
-require_relative '../lib/fast_require'
 
 describe "faster requires" do
 
@@ -29,7 +25,7 @@ describe "faster requires" do
       assert require('c')
       assert !(require 'c')
     end
-    assert $LOADED_FEATURES.length == (@old_length + 1)
+    $LOADED_FEATURES.length.should == (@old_length + 1)
   end
 
   it "should be able to go two sub-requires deep" do
