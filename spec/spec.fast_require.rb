@@ -1,9 +1,9 @@
 require 'rubygems' if RUBY_VERSION < '1.9'
 require 'sane'
-require_relative '../lib/fast_require' # before spec...
-# unfortunately this doesn't help us since we clear before each test :P
 require 'spec/autorun'
 require 'benchmark'
+
+require_relative '../lib/fast_require'
 
 describe "faster requires" do
 
@@ -21,19 +21,21 @@ describe "faster requires" do
   end  
   
   it "should be able to do a single require" do
+    old = $LOADED_FEATURES.dup
     Dir.chdir('files') do
       assert require('c')
       assert !(require 'c')
     end
-    $LOADED_FEATURES.length.should == (@old_length + 1)
+    new = $LOADED_FEATURES - old
+    raise new.inspect if new.length > 1    
   end
 
-  it "should be able to go two sub-requires deep" do
+  it "should be able to go two sub-requires deep appropriately" do
     Dir.chdir('files') do
       assert(require('a_requires_b'))
       assert !(require 'a_requires_b')
       assert !(require 'a_requires_b')
-      $b.should == 1      
+      $b.should == 1
     end
   end
   
@@ -117,5 +119,13 @@ describe "faster requires" do
       ruby 'require_non_dot_rb_fails.rb' # should succeed
     end
   end
+  
+  it "should be able to handle full paths" do
+    Dir.chdir('files') do
+     ruby 'require_full_path.rb' 
+     ruby 'require_full_path.rb'
+    end
+  end
+  
   
 end

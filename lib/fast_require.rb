@@ -22,18 +22,36 @@ module FastRequire
 
   # try to see where this file was loaded from, from $:
   # partial_name might be abc.rb, or might be abc
+  # partial_name might be a full path, too
   def self.guess_discover partial_name, add_dot_rb = false
+    
+    # test for full path first
+    # unfortunately it has to be a full separate test
+    # for windoze sake, as drive letter could be different than slapping a '/' on the dir to test list...
+    tests = [partial_name]
+    
+    if add_dot_rb
+      tests << partial_name + '.rb'
+      tests << partial_name + '.so'
+    end
+    
+    tests.each{|b|
+      # assume that .rb.rb is...valid...
+      if File.file?(b) && ((b[-3..-1] == '.rb') || (b[-3..-1] == '.so'))
+        return File.expand_path(b)
+      end
+    }
+      
     for dir in $:
       if File.file?(b = (dir + '/' + partial_name))
-        
-        # make sure we require a file that has the right suffix, for sure
+        # make sure we require a file that has the right suffix...
         if (b[-3..-1] == '.rb')  || (b[-3..-1] == '.so')
           return File.expand_path(b)
         end
-        
+
       end
     end
-    
+
     if add_dot_rb && (partial_name[-3..-1] != '.rb') && (partial_name[-3..-1] != '.so')
       guess_discover(partial_name + '.rb') || guess_discover(partial_name + '.so')
     else
@@ -41,17 +59,33 @@ module FastRequire
     end
   end
 
-  $LOADED_FEATURES.each{|loaded|
-    if RUBY_VERSION < '1.9'
-      @@already_loaded[FastRequire.guess_discover(loaded) || loaded] = true
+  $LOADED_FEATURES.each{|already_loaded|
+    # in 1.8 they might be partial paths
+    # in 1.9, they might be non collapsed paths
+    # so we have to sanitize them here...
+    # XXXX File.exist? is a bit too loose, here...
+    if File.exist?(already_loaded)
+      key = File.expand_path(already_loaded)
     else
-      @@already_loaded[loaded] = true
+      key = FastRequire.guess_discover(already_loaded) || already_loaded
     end
+    @@already_loaded[key] = true
   }
-
-
+  
+  @@already_loaded[File.expand_path(__FILE__)] = true # this file itself isn't in loaded features, yet, but very soon will be..
+  # special case--I hope...
+  
+  # XXXX within a very long depth to require fast_require, 
+  # require 'a' => 'b' => 'c' => 'd' & fast_require
+  #             => 'b.rb' 
+  # it works always
+  
   def self.already_loaded
     @@already_loaded
+  end
+  
+  def self.require_locs
+    @@require_locs
   end
 
   def self.dir
@@ -130,7 +164,7 @@ module FastRequire
         else
           if $FAST_REQUIRE_DEBUG
             # happens for enumerator XXXX
-            puts 'unable to infer' + lib
+            puts 'unable to infer' + lib + ' in '
             puts $:
           end
         end
@@ -147,18 +181,18 @@ end
 module Kernel
 
   if(defined?(@already_using_fast_require))
-    raise 'cant yet require it twice...'
+    raise 'twice not allowed...'
+    # *shouldn't* get here...unless I'm wrong...
   else
     @already_using_fast_require = true
-  end
+    include FastRequire
+    # overwrite old require...
+    alias :original_non_cached_require :require
+    FastRequire.resetup!
 
-  include FastRequire
-  # overwrite old require...
-  alias :original_non_cached_require :require
-  FastRequire.resetup!
-  
-  def method_added *args
-    puts 'kernel method added', *args
+    def method_added *args
+      puts 'kernel method added', *args
+    end
   end
 
 end
