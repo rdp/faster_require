@@ -1,3 +1,4 @@
+# $FAST_REQUIRE_DEBUG
 require 'rubygems' if RUBY_VERSION < '1.9'
 require 'sane'
 require 'spec/autorun'
@@ -23,6 +24,9 @@ describe "faster requires" do
   it "should be able to do a single require" do
     old = $LOADED_FEATURES.dup
     Dir.chdir('files') do
+      3
+      #require '_dbg'
+      3
       assert require('c')
       assert !(require 'c')
     end
@@ -133,6 +137,13 @@ describe "faster requires" do
   end  
   
   it "should work well with rubygems for gem libs (installed), themselves"
+  
+  it "should disallow a file requiring itself" do
+    ruby 'files/requires_itself.rb'
+    ruby 'files/requires_itself.rb'    
+  end
+  
+  
   
   
   

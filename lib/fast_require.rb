@@ -75,8 +75,14 @@ module FastRequire
   @@already_loaded[File.expand_path(__FILE__)] = true # this file itself isn't in loaded features, yet, but very soon will be..
   # special case--I hope...
   
+  # disallow re-requiring $0
+  @@require_locs[$0] = File.expand_path($0) # so when we run into it on a require, we will skip it...
+  @@already_loaded[File.expand_path($0)] = true
+  
+  
   # XXXX within a very long depth to require fast_require, 
   # require 'a' => 'b' => 'c' => 'd' & fast_require
+  #             then
   #             => 'b.rb' 
   # it works always
   
@@ -189,10 +195,6 @@ module Kernel
     # overwrite old require...
     alias :original_non_cached_require :require
     FastRequire.resetup!
-
-    def method_added *args
-      puts 'kernel method added', *args
-    end
   end
 
 end

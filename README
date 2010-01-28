@@ -1,0 +1,51 @@
+A little utility to make
+
+require 'xxx'
+
+take much less time.
+
+Well, mostly on windows--on linux it's a speedup of only 0.41 to 0.45s, or so. [1]
+
+If you've ever wondered why ruby feels slow on doze...sometimes it's just the startup time.  This helps.
+
+Benchmarks:
+
+loading a spec file:
+
+  1.9.1   
+    without 3.20s
+    with 0.34s (10x improvement)
+
+  1.8.6
+    without 3.6s
+    with 1.25s
+    
+
+rails app, running script/console "puts 333"
+
+ 1.9.1
+   without:
+      20s
+    with:
+      10s
+ 
+ 1.8.6 
+   without:
+       9s
+   with:
+       6s
+       
+rake -T
+
+ 1.9.1
+   without: 3.75s
+   with: 1.5s       
+
+ 1.8.6
+   without: 1.37s
+   with:    1.25s
+   
+Note: in reality what we should do is fix core so that it doesn't have such awful I/O time in windows.  There may be some gross inefficiency in there.  For now, this is a work-around.
+   
+[1] A sister project to this one, faster_gem_script, can make ruby scripts in linux run faster by 0.1s :) http://github.com/rdp/faster_gem_script
+(in windows it's a much higher gain).  Eventually they'll be combined into one "gem optimizer" gem.
