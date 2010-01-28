@@ -1,10 +1,13 @@
 module FastRequire
   $FAST_REQUIRE_DEBUG ||= false
+  
   def self.setup
     @@dir = File.expand_path('~/.ruby_fast_require_cache')
 
     Dir.mkdir @@dir unless File.directory?(@@dir)
-    @@loc = @@dir + '/' + RUBY_VERSION + '-' + RUBY_PLATFORM + '-' + sanitize(File.expand_path($0).gsub(/[\/:]/, '_')) + sanitize(Dir.pwd)
+    @@loc = @@dir + '/' + RUBY_VERSION + '-' + RUBY_PLATFORM + '-' + 
+       sanitize(File.expand_path($0).gsub(/[\/:]/, '_')) + 
+       sanitize(Dir.pwd)
   end
 
   def self.sanitize filename
@@ -12,12 +15,17 @@ module FastRequire
   end
 
   FastRequire.setup
+  
+  def self.load filename
+    @@require_locs = Marshal.restore( File.open(filename, 'rb') {|f| f.read})
+  end
 
   if File.exist?(@@loc)
-    @@require_locs = Marshal.restore( File.open(@@loc, 'rb') {|f| f.read})
+    FastRequire.load @@loc
   else
     @@require_locs = {}
   end
+  
   @@already_loaded = {}
 
   # try to see where this file was loaded from, from $:
@@ -99,11 +107,15 @@ module FastRequire
   end
 
   at_exit {
-    FastRequire.save
+    FastRequire.default_save
   }
+  
+  def self.default_save
+    self.save @@loc
+  end
 
-  def self.save
-    File.open(@@loc, 'wb'){|f| f.write Marshal.dump(@@require_locs)}
+  def self.save to_file
+    File.open(to_file, 'wb'){|f| f.write Marshal.dump(@@require_locs)}
   end
 
   def self.clear_all!
@@ -172,6 +184,7 @@ module FastRequire
           if $FAST_REQUIRE_DEBUG
             # happens for enumerator XXXX
             puts 'unable to infer' + lib + ' in ' if $FAST_REQUIRE_DEBUG
+            @@already_loaded[found] = true # hacky
           end
         end
         return false # XXXX test all these return values

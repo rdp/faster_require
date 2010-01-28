@@ -1,10 +1,17 @@
 # $FAST_REQUIRE_DEBUG
-require 'rubygems' if RUBY_VERSION < '1.9'
-require 'sane'
+if RUBY_VERSION < '1.9'
+  require 'faster_rubygems'
+  require 'sane'
+end
+
+cached = '.cached_spec_locs' + RUBY_VERSION
+puts cached
+require_relative '../lib/fast_require'
+# use it for our own local test specs
+FastRequire.load cached if File.exist? cached
 require 'spec/autorun'
 require 'benchmark'
-
-require_relative '../lib/fast_require'
+FastRequire.save cached
 
 describe "faster requires" do
 
@@ -74,7 +81,7 @@ describe "faster requires" do
 
   it "should save a file as a cache in a dir" do    
     assert Dir[FastRequire.dir + '/*'].length == 0 # all clear
-    FastRequire.save
+    FastRequire.default_save
     assert Dir[FastRequire.dir + '/*'].length > 0
   end
   
@@ -96,8 +103,9 @@ describe "faster requires" do
   end
   
   private
+  
   def ruby filename
-    assert system(@ruby  + " " + filename)
+    3.times { assert system(@ruby  + " " + filename) }    
   end
   
   it "should override rubygems' require if rubygems is loaded after the fact...maybe by hooking to Gem::const_defined or something" do
@@ -106,7 +114,12 @@ describe "faster requires" do
   
   it "should override rubygems' require if rubygems is loaded before the fact" do
     ruby "files/gem_before.rb"    
-  end
+  end  
+  
+  it "should not double load gems" do
+    a = `#{@ruby} files/gem_after.rb 2>&1`
+    a.should_not match('already initialized')
+ end
   
   it "should throw if you require it twice" do
     Dir.chdir('files') do
@@ -117,18 +130,16 @@ describe "faster requires" do
   it "should force require 'abc' to not load file called exactly abc" do
     Dir.chdir('files') do
       ruby 'require_non_dot_rb_fails.rb'
-      ruby 'require_non_dot_rb_fails.rb' # should succeed
     end
   end
   
-  it "should be able to handle full paths" do
+  it "should handle full path requires" do
     Dir.chdir('files') do
      ruby 'require_full_path.rb' 
-     ruby 'require_full_path.rb'
     end
   end
   
-  it "should handle Pathname too" do
+  it "should handle Pathname requires, too" do
     require 'pathname'
     require Pathname.new('pathname')
   end  
@@ -139,6 +150,5 @@ describe "faster requires" do
     ruby 'files/requires_itself.rb'
     ruby 'files/requires_itself.rb'    
   end
-  
   
 end
