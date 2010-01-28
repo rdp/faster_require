@@ -22,16 +22,13 @@ describe "faster requires" do
   end  
   
   it "should be able to do a single require" do
-    old = $LOADED_FEATURES.dup
     Dir.chdir('files') do
-      3
-      #require '_dbg'
-      3
+      old = $LOADED_FEATURES.dup
       assert require('c')
       assert !(require 'c')
+      new = $LOADED_FEATURES - old
+      raise new.inspect if new.length != 1    
     end
-    new = $LOADED_FEATURES - old
-    raise new.inspect if new.length > 1    
   end
 
   it "should be able to go two sub-requires deep appropriately" do
@@ -133,7 +130,7 @@ describe "faster requires" do
   
   it "should handle Pathname too" do
     require 'pathname'
-    require Pathname.new('spec.fast_require.rb')
+    require Pathname.new('pathname')
   end  
   
   it "should work well with rubygems for gem libs (installed), themselves"
@@ -142,9 +139,6 @@ describe "faster requires" do
     ruby 'files/requires_itself.rb'
     ruby 'files/requires_itself.rb'    
   end
-  
-  
-  
   
   
 end
