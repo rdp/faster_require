@@ -108,6 +108,7 @@ module FastRequire
   end
 
   def require_cached lib
+    lib = lib.to_s unless lib.is_a?(String) # might not be zactly 1.9 compat...
     if known_loc = @@require_locs[lib]
       return false if @@already_loaded[known_loc]
       @@already_loaded[known_loc] = true

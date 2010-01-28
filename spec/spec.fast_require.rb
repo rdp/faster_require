@@ -127,5 +127,9 @@ describe "faster requires" do
     end
   end
   
+  it "should handle Pathname too" do
+    require 'pathname'
+    require Pathname.new('spec.fast_require.rb')
+  end  
   
 end
