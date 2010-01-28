@@ -132,4 +132,8 @@ describe "faster requires" do
     require Pathname.new('spec.fast_require.rb')
   end  
   
+  it "should work well with rubygems for gem libs (installed), themselves"
+  
+  
+  
 end

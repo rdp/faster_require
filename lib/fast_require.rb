@@ -165,8 +165,7 @@ module FastRequire
         else
           if $FAST_REQUIRE_DEBUG
             # happens for enumerator XXXX
-            puts 'unable to infer' + lib + ' in '
-            puts $:
+            puts 'unable to infer' + lib + ' in ' if $FAST_REQUIRE_DEBUG
           end
         end
         return false # XXXX test all these return values
