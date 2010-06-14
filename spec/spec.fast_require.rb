@@ -7,22 +7,20 @@ require 'benchmark'
 
 
 unless RUBY_PLATFORM =~ /java/
-require_relative '../lib/faster_require'
-cached = '.cached_spec_locs' + RUBY_VERSION
-# use it for our own local test specs
-FastRequire.load cached if File.exist? cached
-require 'spec/autorun'
-FastRequire.save cached
+ require_relative '../lib/faster_require'
+ cached = '.cached_spec_locs' + RUBY_VERSION
+ # use it for our own local test specs
+ FastRequire.load cached if File.exist? cached
+ require 'spec/autorun'
+ FastRequire.save cached
 else
   
 require 'spec/autorun'
-
-require_relative '../lib/faster_require'
+ require_relative '../lib/faster_require'
   
 end
 
-
-describe "faster requires" do
+describe "requires faster" do
 
   before do
     FastRequire.clear_all!
@@ -76,9 +74,9 @@ describe "faster requires" do
 
   it "should not re-save the cache file if it hasn't changed [?]"
   
-  it "should require .so files still, and only load them once" do
+  it "should load .so files still, and only load them once" do
     # ruby-prof gem
-    2.times { require 'ruby_prof'; RubyProf } # .so
+    2.times { require RUBY_VERSION[0..2] + '/ruby_prof'; RubyProf } # .so
     assert $LOADED_FEATURES.length == (@old_length + 1)
   end
 
