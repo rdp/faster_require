@@ -1,17 +1,26 @@
 # $FAST_REQUIRE_DEBUG
 if RUBY_VERSION < '1.9'
   require 'faster_rubygems'
-  require 'sane'
 end
+require 'sane'
+require 'benchmark'
 
+
+unless RUBY_PLATFORM =~ /java/
+require_relative '../lib/faster_require'
 cached = '.cached_spec_locs' + RUBY_VERSION
-puts cached
-require_relative '../lib/fast_require'
 # use it for our own local test specs
 FastRequire.load cached if File.exist? cached
 require 'spec/autorun'
-require 'benchmark'
 FastRequire.save cached
+else
+  
+require 'spec/autorun'
+
+require_relative '../lib/faster_require'
+  
+end
+
 
 describe "faster requires" do
 

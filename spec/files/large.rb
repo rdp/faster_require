@@ -1,5 +1,4 @@
 require 'rubygems'
-require 'ruby-debug'
-require File.dirname(File.expand_path(__FILE__)) + '/../../lib/fast_require.rb'
+require File.dirname(File.expand_path(__FILE__)) + '/../../lib/faster_require.rb'
 require 'stringio'
 require 'redparse'

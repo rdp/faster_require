@@ -10,32 +10,32 @@ If you've ever wondered why ruby feels slow on doze...sometimes it's just the st
 
 Benchmarks:
 
-loading a single spec file:
+loading a spec file:
 
   1.9.1   
-    with 0.34s (10x improvement)
     without 3.20s
+    with 0.34s (10x improvement)
 
   1.8.6
-    with 1.25s
     without 3.6s
+    with 1.25s
     
 
 rails app, running script/console "puts 333"
 
  1.9.1
-    with:
-      10s
    without:
       20s
+    with:
+      10s
  
  1.8.6 
-   with:
-       6s
    without:
        9s
+   with:
+       6s
        
-running a rake -T
+rake -T
 
  1.9.1
    without: 3.75s
@@ -44,11 +44,6 @@ running a rake -T
  1.8.6
    without: 1.37s
    with:    1.25s
-
-How to use:
-
-$ gem install faster_require
-now put a require 'faster_require' somewhere (early on) in your script that you want to run.
    
 Note: in reality what we should do is fix core so that it doesn't have such awful I/O time in windows.  There may be some gross inefficiency in there.  For now, this is a work-around.
    

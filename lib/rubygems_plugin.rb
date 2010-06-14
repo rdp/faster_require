@@ -1,5 +1,5 @@
 Gem.post_install { |gem_installer_instance|
-  require 'fast_require'
+  require 'faster_require'
   FastRequire.clear_all!
-  puts 'cleared fast_require caches due to new gem install...'
+  puts 'cleared faster_require caches due to new gem install...'
 }

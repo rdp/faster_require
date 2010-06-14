@@ -1,1 +1,1 @@
-require 'fast_require'
+require 'faster_require'
