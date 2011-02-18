@@ -1,4 +1,4 @@
 #!/usr/bin/env ruby
-require 'fast_require'
+require 'faster_require'
 FastRequire.clear_all!
 puts 'successfully cleared fast_require cache: (' + FastRequire.dir + ')'
