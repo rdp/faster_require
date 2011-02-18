@@ -1,3 +1,5 @@
+require 'rbconfig'
+
 module FastRequire
   $FAST_REQUIRE_DEBUG ||= $DEBUG # can set it via $DEBUG, or by itself
 
@@ -40,12 +42,12 @@ module FastRequire
 
     if add_dot_rb
       tests << partial_name + '.rb'
-      tests << partial_name + '.so'
+      tests << partial_name + '.' + RbConfig::CONFIG['DLEXT']
     end
 
     tests.each{|b|
       # assume that .rb.rb is...valid...
-      if File.file?(b) && ((b[-3..-1] == '.rb') || (b[-3..-1] == '.so'))
+      if File.file?(b) && ((b[-3..-1] == '.rb') || (b[-3..-1] == '.' + RbConfig::CONFIG['DLEXT']))
         return File.expand_path(b)
       end
     }
@@ -53,15 +55,15 @@ module FastRequire
     for dir in $:
       if File.file?(b = (dir + '/' + partial_name))
         # make sure we require a file that has the right suffix...
-        if (b[-3..-1] == '.rb')  || (b[-3..-1] == '.so')
+        if (b[-3..-1] == '.rb')  || (b[-3..-1] == '.' + RbConfig::CONFIG['DLEXT'])
           return File.expand_path(b)
         end
 
       end
     end
 
-    if add_dot_rb && (partial_name[-3..-1] != '.rb') && (partial_name[-3..-1] != '.so')
-      guess_discover(partial_name + '.rb') || guess_discover(partial_name + '.so')
+    if add_dot_rb && (partial_name[-3..-1] != '.rb') && (partial_name[-3..-1] != '.' + RbConfig::CONFIG['DLEXT'])
+      guess_discover(partial_name + '.rb') || guess_discover(partial_name + '.')
     else
       nil
     end
@@ -130,7 +132,7 @@ module FastRequire
     if known_loc = @@require_locs[lib]
       return false if @@already_loaded[known_loc]
       @@already_loaded[known_loc] = true
-      if known_loc =~ /.so$/
+      if known_loc =~ /.#{RbConfig::CONFIG['DLEXT']}$/
         puts 'doing original_non_cached_require on .so full path ' + known_loc if $FAST_REQUIRE_DEBUG
         original_non_cached_require known_loc # not much we can do there...too bad...
       else

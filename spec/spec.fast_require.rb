@@ -10,8 +10,14 @@ unless RUBY_PLATFORM =~ /java/
  require_relative '../lib/faster_require'
  cached = '.cached_spec_locs' + RUBY_VERSION
  # use it for our own local test specs
+ begin
+   require 'spec/autorun'
+ rescue LoadError
+  # rspec 2
+  require 'rspec'
+ end
+ # TODO rspec can't load? huh? what the...
  FastRequire.load cached if File.exist? cached
- require 'spec/autorun'
  FastRequire.save cached
 else
   
