@@ -1,7 +1,9 @@
 # $FAST_REQUIRE_DEBUG
+
 if RUBY_VERSION < '1.9'
   require 'faster_rubygems'
 end
+
 require 'sane'
 require 'benchmark'
 
@@ -118,7 +120,8 @@ describe "requires faster" do
   private
   
   def ruby filename
-    3.times { assert system(@ruby  + " " + filename) }    
+    command = @ruby + " " + filename
+    3.times { raise command unless system(command) }    
   end
   
   it "should override rubygems' require if rubygems is loaded after the fact...maybe by hooking to Gem::const_defined or something" do

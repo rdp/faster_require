@@ -1,3 +1,4 @@
+$: << '.'
 require '../lib/faster_require.rb'
 require 'rubygems'
 Gem::Specification

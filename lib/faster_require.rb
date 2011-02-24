@@ -126,7 +126,7 @@ module FastRequire
     @@require_locs.clear
     setup
   end
-
+  
   def require_cached lib
     lib = lib.to_s unless lib.is_a?(String) # might not be zactly 1.9 compat...
     if known_loc = @@require_locs[lib]
@@ -138,8 +138,12 @@ module FastRequire
       else
         unless $LOADED_FEATURES.include? known_loc
           puts 'doing eval on ' + lib + '=>' + known_loc if $FAST_REQUIRE_DEBUG
-          $LOADED_FEATURES << known_loc # *must*
-          return eval(File.open(known_loc, 'rb') {|f| f.read}, TOPLEVEL_BINDING, known_loc) || true # note the b here--this means it's reading .rb files as binary, which *typically* works--if it breaks re-save the offending file in binary mode, or file an issue on the tracker...
+          if known_loc =~ /rubygems.rb$/
+            require known_loc # so rubygems doesn't freak out when it finds itself already in $LOADED_FEATURES :P
+          else
+            $LOADED_FEATURES << known_loc # *must*
+            return eval(File.open(known_loc, 'rb') {|f| f.read}, TOPLEVEL_BINDING, known_loc) || true # note the b here--this means it's reading .rb files as binary, which *typically* works--if it breaks re-save the offending file in binary mode, or file an issue on the tracker...
+          end
         end
       end
     else

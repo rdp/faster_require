@@ -7,9 +7,10 @@
     s.email = "rogerdpack@gmail.com"
     s.homepage = "http://github.com/rdp/faster_require"
     s.authors = ["Roger Pack"]
-    s.add_development_dependency 'rspec'
+    s.add_development_dependency 'redparse'
+    s.add_development_dependency 'jeweler'
+    s.add_development_dependency 'rspec', '>= 2'
     s.add_development_dependency 'sane'
     s.add_development_dependency 'ruby-prof'
-    s.add_dependency 'regin'
     # s.add_dependency
   end
