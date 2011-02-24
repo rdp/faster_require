@@ -136,9 +136,11 @@ module FastRequire
         puts 'doing original_non_cached_require on .so full path ' + known_loc if $FAST_REQUIRE_DEBUG
         original_non_cached_require known_loc # not much we can do there...too bad...
       else
-        puts 'doing eval on ' + lib + '=>' + known_loc if $FAST_REQUIRE_DEBUG
-        $LOADED_FEATURES << known_loc # *must*
-        return eval(File.open(known_loc, 'rb') {|f| f.read}, TOPLEVEL_BINDING, known_loc) || true # note the b here--this means it's reading .rb files as binary, which *typically* works--if it breaks re-save the offending file in binary mode, or file an issue on the tracker...
+        unless $LOADED_FEATURES.include? known_loc
+          puts 'doing eval on ' + lib + '=>' + known_loc if $FAST_REQUIRE_DEBUG
+          $LOADED_FEATURES << known_loc # *must*
+          return eval(File.open(known_loc, 'rb') {|f| f.read}, TOPLEVEL_BINDING, known_loc) || true # note the b here--this means it's reading .rb files as binary, which *typically* works--if it breaks re-save the offending file in binary mode, or file an issue on the tracker...
+        end
       end
     else
       # we don't know the location--let Ruby's original require do the heavy lifting for us here
