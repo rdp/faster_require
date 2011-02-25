@@ -1,3 +1,3 @@
 require 'rubygems'
 require 'rspec'
-a = Spec
+a = RSpec

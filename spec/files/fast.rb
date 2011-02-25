@@ -1,4 +1,5 @@
-require 'rubygems'
 require File.dirname(__FILE__) + "/../../lib/faster_require.rb"
+require 'rubygems'
 require 'rspec'
-a = Spec
+a = RSpec
+p 'success'

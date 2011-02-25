@@ -5,11 +5,12 @@ module FastRequire
 
   def self.setup
     @@dir = File.expand_path('~/.ruby_faster_require_cache')
-
+    loc_name = sanitize(File.basename($0)) + '-' + RUBY_VERSION + '-' + RUBY_PLATFORM + '-' +
+      sanitize(Dir.pwd) + 
+      sanitize(File.dirname(File.expand_path($0).gsub(/[\/:]/, '_')))
+      
     Dir.mkdir @@dir unless File.directory?(@@dir)
-    @@loc = @@dir + '/' + RUBY_VERSION + '-' + RUBY_PLATFORM + '-' +
-    sanitize(File.expand_path($0).gsub(/[\/:]/, '_')) +
-    sanitize(Dir.pwd)
+    @@loc = @@dir + '/' + loc_name[0..50] # not too long...
   end
 
   def self.sanitize filename
@@ -46,7 +47,7 @@ module FastRequire
     end
 
     tests.each{|b|
-      # assume that .rb.rb is...valid...
+      # assume that .rb.rb is...valid...?
       if File.file?(b) && ((b[-3..-1] == '.rb') || (b[-3..-1] == '.' + RbConfig::CONFIG['DLEXT']))
         return File.expand_path(b)
       end
@@ -126,24 +127,42 @@ module FastRequire
     @@require_locs.clear
     setup
   end
-  
+#   require 'ruby-debug'
   def require_cached lib
-    lib = lib.to_s unless lib.is_a?(String) # might not be zactly 1.9 compat...
+    lib = lib.to_s # might not be zactly 1.9 compat... to_path ??
+   # p 'doing require ' + lib
     if known_loc = @@require_locs[lib]
-      return false if @@already_loaded[known_loc]
+      if @@already_loaded[known_loc]
+        p 'already loaded ' + known_loc if $FAST_REQUIRE_DEBUG
+        return false 
+      end
       @@already_loaded[known_loc] = true
-      if known_loc =~ /.#{RbConfig::CONFIG['DLEXT']}$/
+      if known_loc =~ /\.#{RbConfig::CONFIG['DLEXT']}$/
         puts 'doing original_non_cached_require on .so full path ' + known_loc if $FAST_REQUIRE_DEBUG
-        original_non_cached_require known_loc # not much we can do there...too bad...
+        original_non_cached_require known_loc # not much we can do there...too bad...well at least we pass it a full path though :P
       else
         unless $LOADED_FEATURES.include? known_loc
-          puts 'doing eval on ' + lib + '=>' + known_loc if $FAST_REQUIRE_DEBUG
           if known_loc =~ /rubygems.rb$/
-            require known_loc # so rubygems doesn't freak out when it finds itself already in $LOADED_FEATURES :P
+            puts 'requiring rubygems ' + known_loc if $FAST_REQUIRE_DEBUG
+            original_non_cached_require(known_loc) # normal require so rubygems doesn't freak out when it finds itself already in $LOADED_FEATURES :P
           else
-            $LOADED_FEATURES << known_loc # *must*
-            return eval(File.open(known_loc, 'rb') {|f| f.read}, TOPLEVEL_BINDING, known_loc) || true # note the b here--this means it's reading .rb files as binary, which *typically* works--if it breaks re-save the offending file in binary mode, or file an issue on the tracker...
+            if $FAST_REQUIRE_DEBUG
+              puts 'doing cached loc eval on ' + lib + '=>' + known_loc 
+              p known_loc
+            end
+            $LOADED_FEATURES << known_loc
+            # fakely add the load path, too, so that autoload for the same file will <sigh> work [rspec2]
+            no_suffix_full_path = known_loc.gsub(/\.[^.]+$/, '')
+            no_suffix_lib = lib.gsub(/\.[^.]+$/, '')
+            libs_path = no_suffix_full_path.gsub(no_suffix_lib, '')
+            libs_path = File.expand_path(libs_path) # strip off trailing '/'
+            $: << libs_path unless $:.index(libs_path)
+            load(known_loc, false)
+            # we use load instead...           eval(File.open(known_loc, 'r') {|f| f.read}, TOPLEVEL_BINDING, known_loc) # note the rb here--this means it's reading .rb files as binary, which *typically* works--if it breaks re-save the offending file in binary mode, or file an issue on the tracker...
+            return true
           end
+        else
+          puts 'ignoring already loaded? ' + known_loc if $FAST_REQUIRE_DEBUG
         end
       end
     else
@@ -179,7 +198,7 @@ module FastRequire
         # calc location, expand, map back
         where_found = FastRequire.guess_discover(lib, true)
         if where_found
-          puts 'inferred ghost loc:' + lib + '=>' + where_found if $FAST_REQUIRE_DEBUG
+          puts 'inferred lib loc:' + lib + '=>' + where_found if $FAST_REQUIRE_DEBUG
           @@require_locs[lib] = where_found
           # unfortunately if it's our first pass
           # and we are in the middle of a "real" require
@@ -210,7 +229,7 @@ module Kernel
 
   if(defined?(@already_using_faster_require))
     raise 'twice not allowed...'
-    # *shouldn't* get here...unless I'm wrong...
+    # *shouldn't* ever get here...unless I'm wrong...
   else
     @already_using_faster_require = true
     include FastRequire

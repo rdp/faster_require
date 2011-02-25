@@ -164,7 +164,20 @@ describe "requires faster" do
   
   it "should disallow a file requiring itself" do
     ruby 'files/requires_itself.rb'
-    ruby 'files/requires_itself.rb'    
   end
   
+  it "should put modules in the right place" do
+    Dir.chdir('files') do
+      ruby 'should_put_modules_in_right_place.rb'
+    end
+  end
+
+  it "should" do
+    Dir.chdir('files') do
+      ruby 'fast2'
+    end
+  end
+
+
+
 end
