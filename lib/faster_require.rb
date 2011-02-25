@@ -5,12 +5,11 @@ module FastRequire
 
   def self.setup
     @@dir = File.expand_path('~/.ruby_faster_require_cache')
-    loc_name = sanitize(File.basename($0)) + '-' + RUBY_VERSION + '-' + RUBY_PLATFORM + '-' +
-      sanitize(Dir.pwd) + 
-      sanitize(File.dirname(File.expand_path($0).gsub(/[\/:]/, '_')))
-      
     Dir.mkdir @@dir unless File.directory?(@@dir)
-    @@loc = @@dir + '/' + loc_name[0..50] # not too long...
+    
+    parts = [File.basename($0), RUBY_VERSION, RUBY_PLATFORM, File.basename(Dir.pwd), Dir.pwd, File.dirname($0), File.expand_path(File.dirname($0))].map{|part| sanitize(part)}
+    loc_name = (parts.map{|part| part[0..5]} + parts).join('-')[0..75] # try to be unique, but short...
+    @@loc = @@dir + '/' + loc_name
   end
 
   def self.sanitize filename
@@ -148,17 +147,17 @@ module FastRequire
           else
             if $FAST_REQUIRE_DEBUG
               puts 'doing cached loc eval on ' + lib + '=>' + known_loc 
-              p known_loc
             end
             $LOADED_FEATURES << known_loc
-            # fakely add the load path, too, so that autoload for the same file will <sigh> work [rspec2]
+            # fakely add the load path, too, so that autoload for the same file will work <sigh> [rspec2]
             no_suffix_full_path = known_loc.gsub(/\.[^.]+$/, '')
             no_suffix_lib = lib.gsub(/\.[^.]+$/, '')
             libs_path = no_suffix_full_path.gsub(no_suffix_lib, '')
             libs_path = File.expand_path(libs_path) # strip off trailing '/'
             $: << libs_path unless $:.index(libs_path)
-            load(known_loc, false)
-            # we use load instead...           eval(File.open(known_loc, 'r') {|f| f.read}, TOPLEVEL_BINDING, known_loc) # note the rb here--this means it's reading .rb files as binary, which *typically* works--if it breaks re-save the offending file in binary mode, or file an issue on the tracker...
+            # load(known_loc, false) # too slow
+            eval(File.open(known_loc, 'rb') {|f| f.read}, TOPLEVEL_BINDING, known_loc) # note the rb here--this means it's reading .rb files as binary, which *typically* works...maybe unnecessary?
+            # --if it breaks re-save the offending file in binary mode, or file an issue on the tracker...
             return true
           end
         else

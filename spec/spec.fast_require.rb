@@ -1,12 +1,11 @@
-# $FAST_REQUIRE_DEBUG
+# can set this: $FAST_REQUIRE_DEBUG
 
 if RUBY_VERSION < '1.9'
-  require 'faster_rubygems'
+  require 'rubygems' # faster_rubygems, perhaps?
 end
 
 require 'sane'
 require 'benchmark'
-
 
 unless RUBY_PLATFORM =~ /java/
  require_relative '../lib/faster_require'
@@ -18,7 +17,6 @@ unless RUBY_PLATFORM =~ /java/
   # rspec 2
   require 'rspec'
  end
- # TODO rspec can't load? huh? what the...
  FastRequire.load cached if File.exist? cached
  FastRequire.save cached
 else
@@ -79,12 +77,14 @@ describe "requires faster" do
   		assert(system("#{OS.ruby_bin} large.rb"))
   	end
   end
+  
+  it "could cache file contents, too, in theory...oh my"
 
   it "should not re-save the cache file if it hasn't changed [?]"
   
   it "should load .so files still, and only load them once" do
     # ruby-prof gem
-    2.times { require RUBY_VERSION[0..2] + '/ruby_prof'; RubyProf } # .so
+    2.times { require 'ruby_prof.so'; RubyProf }
     assert $LOADED_FEATURES.length == (@old_length + 1)
   end
 
@@ -108,9 +108,11 @@ describe "requires faster" do
    	  assert system("ruby -I../../lib e.rb")
    	  assert system("ruby -C.. -I../lib files/e.rb")
    end
+ # require 'ruby-debug'
+#  debugger
    assert Dir[FastRequire.dir + '/*'].length == 3    
-   assert Dir[FastRequire.dir + '/*spec_files_d*'].length == 1 # use full path
-   assert Dir[FastRequire.dir + '/*spec_files_e*'].length == 2 # different dirs
+   assert Dir[FastRequire.dir + '/*d.rb*'].length == 1 # use full path
+   assert Dir[FastRequire.dir + '/*e.rb*'].length == 2 # different Dir.pwd's
   end
     
   context "should work with ascii files well" do # most are binary, so...low prio
@@ -174,7 +176,7 @@ describe "requires faster" do
 
   it "should" do
     Dir.chdir('files') do
-      ruby 'fast2'
+      ruby 'fast2.rb'
     end
   end
 
