@@ -19,7 +19,7 @@ module FastRequire
   FastRequire.setup
 
   def self.load filename
-    @@require_locs = Marshal.restore( File.open(filename, 'rb') {|f| f.read})
+    @@require_locs = Marshal.restore( File.open(filename, 'rb') {|f| f.read}) rescue {}
   end
 
   if File.exist?(@@loc)
