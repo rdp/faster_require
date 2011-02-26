@@ -19,7 +19,7 @@ module FastRequire
   FastRequire.setup
 
   def self.load filename
-    @@require_locs = Marshal.restore( File.open(filename, 'rb') {|f| f.read}) rescue {}
+    @@require_locs = Marshal.restore( File.open(filename, 'rb') {|f| f.read}) rescue {} 
   end
 
   if File.exist?(@@loc)
@@ -88,7 +88,6 @@ module FastRequire
   # disallow re-requiring $0
   @@require_locs[$0] = File.expand_path($0) # so when we run into it on a require, we will skip it...
   @@already_loaded[File.expand_path($0)] = true
-
 
   # XXXX within a very long depth to require fast_require,
   # require 'a' => 'b' => 'c' => 'd' & fast_require
