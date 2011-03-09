@@ -20,13 +20,11 @@ unless RUBY_PLATFORM =~ /java/
  FastRequire.load cached if File.exist? cached
  FastRequire.save cached
 else
-  
-require 'spec/autorun'
- require_relative '../lib/faster_require'
-  
+  require 'spec/autorun'
+  require_relative '../lib/faster_require'
 end
 
-describe "requires faster" do
+describe "requires faster!" do
 
   before do
     FastRequire.clear_all!
@@ -135,17 +133,21 @@ describe "requires faster" do
   end  
   
   it "should not double load gems" do
-    a = `#{@ruby} files/gem_after.rb 2>&1`
-    a.should_not match('already initialized')
+    for filename in ['gem_after.rb', 'load_various_gems.rb', 'load_various_gems2.rb'] do
+      3.times {
+        a = `#{@ruby} files/#{filename} 2>&1`
+        a.should_not match('already initialized')
+      }
+    end
  end
-  
-  it "should throw if you require it twice" do
+
+  it "should throw if you require itself twice" do
     Dir.chdir('files') do
       assert !system(@ruby + 'attempt_double_load.rb')
     end
   end
   
-  it "should force require 'abc' to not load file called exactly abc" do
+  it "require 'abc' should not attempt to load file called exactly abc" do
     Dir.chdir('files') do
       ruby 'require_non_dot_rb_fails.rb'
     end
@@ -174,12 +176,13 @@ describe "requires faster" do
     end
   end
 
-  it "should" do
+  it "should do this type loading too" do
     Dir.chdir('files') do
       ruby 'fast2.rb'
     end
   end
-
+  
+  it "should be able to infer .so files like socket.so"
 
 
 end

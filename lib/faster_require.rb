@@ -1,7 +1,7 @@
 require 'rbconfig'
 
 module FastRequire
-  $FAST_REQUIRE_DEBUG ||= $DEBUG # can set it via $DEBUG, or by itself
+  $FAST_REQUIRE_DEBUG ||= $DEBUG # can set via $DEBUG, or on its own.
 
   def self.setup
     @@dir = File.expand_path('~/.ruby_faster_require_cache')
@@ -83,9 +83,9 @@ module FastRequire
   }
 
   @@already_loaded[File.expand_path(__FILE__)] = true # this file itself isn't in loaded features, yet, but very soon will be..
-  # special case--I hope...
+  # a special case--I hope...
 
-  # disallow re-requiring $0
+  # also disallow re- $0
   @@require_locs[$0] = File.expand_path($0) # so when we run into it on a require, we will skip it...
   @@already_loaded[File.expand_path($0)] = true
 
@@ -125,13 +125,20 @@ module FastRequire
     @@require_locs.clear
     setup
   end
-#   require 'ruby-debug'
+  
+  private
+  def last_caller
+   caller[-2]
+  end
+  
+  public
+  
   def require_cached lib
     lib = lib.to_s # might not be zactly 1.9 compat... to_path ??
-   # p 'doing require ' + lib
+    p 'doing require ' + lib + ' ' + caller[-1] if $FAST_REQUIRE_DEBUG
     if known_loc = @@require_locs[lib]
       if @@already_loaded[known_loc]
-        p 'already loaded ' + known_loc if $FAST_REQUIRE_DEBUG
+        p 'already loaded ' + known_loc + ' ' + lib if $FAST_REQUIRE_DEBUG
         return false 
       end
       @@already_loaded[known_loc] = true
@@ -141,8 +148,8 @@ module FastRequire
       else
         unless $LOADED_FEATURES.include? known_loc
           if known_loc =~ /rubygems.rb$/
-            puts 'requiring rubygems ' + known_loc if $FAST_REQUIRE_DEBUG
-            original_non_cached_require(known_loc) # normal require so rubygems doesn't freak out when it finds itself already in $LOADED_FEATURES :P
+            puts 'requiring rubygems ' + lib if $FAST_REQUIRE_DEBUG
+            original_non_cached_require(lib) # revert to normal require so rubygems doesn't freak out when it finds itself already in $LOADED_FEATURES with rubygems > 1.6 :P
           else
             if $FAST_REQUIRE_DEBUG
               puts 'doing cached loc eval on ' + lib + '=>' + known_loc 
@@ -160,19 +167,19 @@ module FastRequire
             return true
           end
         else
-          puts 'ignoring already loaded? ' + known_loc if $FAST_REQUIRE_DEBUG
+          puts 'ignoring already loaded [circular require?] ' + known_loc + ' ' + lib if $FAST_REQUIRE_DEBUG
         end
       end
     else
       # we don't know the location--let Ruby's original require do the heavy lifting for us here
       old = $LOADED_FEATURES.dup
-      if(original_non_cached_require lib)
+      if(original_non_cached_require(lib))
         # debugger might land here the first time you run a script and it doesn't have a require
         # cached yet...
         new = $LOADED_FEATURES - old
         found = new.last
 
-        # incredibly, in 1.8.6, this doesn't always get set to a full path
+        # incredibly, in 1.8.x, this doesn't always get set to a full path.
         if RUBY_VERSION < '1.9'
           if !File.file?(found)
             # discover the full path.
@@ -187,7 +194,10 @@ module FastRequire
         @@already_loaded[found] = true
         return true
       else
-        puts 'already loaded, apparently' + lib if $FAST_REQUIRE_DEBUG
+      
+        # this is expected if it's for libraries required before faster_require was [like rbconfig]
+        # raise 'actually expected' + lib if RUBY_VERSION >= '1.9.0'
+        puts 'already loaded, apparently [require returned false], trying to discover how it was redundant... ' + lib if $FAST_REQUIRE_DEBUG
         # this probably was something like
         # the first pass was require 'regdeferred'
         # now it's a different require 'regdeferred.rb'
@@ -210,7 +220,7 @@ module FastRequire
           if $FAST_REQUIRE_DEBUG
             # happens for enumerator XXXX
             puts 'unable to infer' + lib + ' in ' if $FAST_REQUIRE_DEBUG
-            @@already_loaded[found] = true # hacky
+            @@already_loaded[found] = true # so hacky...
           end
         end
         return false # XXXX test all these return values
@@ -218,22 +228,41 @@ module FastRequire
     end
   end
 
-  def self.resetup!
-    eval "module ::Kernel; alias :require :require_cached; end"
-  end
 end
 
 module Kernel
 
   if(defined?(@already_using_faster_require))
-    raise 'twice not allowed...'
-    # *shouldn't* ever get here...unless I'm wrong...
+    raise 'loading twice not allowed...we should never get here!'
+  end
+  @already_using_faster_require = true
+  # overwrite old require...
+  include FastRequire
+  if defined?(gem_original_require)
+    class << self
+      alias :original_remove_method :remove_method
+      
+      def remove_method method
+        if method.to_s == 'require'
+          p 'doing nothing'
+        else
+          original_remove_method method
+        end
+      end
+    
+    end
+    
+  #  unused?
+  #    def remove_method method
+  #     p 'in mine2'
+  #    end
+  
+    # similarly overwrite this one...I guess...1.9.x...rubygems uses this as its default...I think...
+    alias :original_non_cached_require :gem_original_require
+    alias :gem_original_require :require_cached
   else
-    @already_using_faster_require = true
-    include FastRequire
-    # overwrite old require...
     alias :original_non_cached_require :require
-    FastRequire.resetup!
+    alias :require :require_cached
   end
 
 end

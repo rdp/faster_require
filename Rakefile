@@ -1,4 +1,10 @@
-  require 'faster_rubygems' if RUBY_VERSION < "1.9'"
+  require 'rubygems' if RUBY_VERSION < "1.9'"
+  
+begin
+  require 'psych' # sigh
+rescue ::LoadError
+end
+  
   require 'jeweler'
   Jeweler::Tasks.new do |s|
     s.name = "faster_require"
