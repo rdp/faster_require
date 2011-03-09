@@ -184,7 +184,9 @@ describe "requires faster!" do
     end
   end
   
-  it "should be able to infer .so files like socket.so"
+  it "should be able to infer .so files like socket.so" #do
+#    ruby "files/load_socket.rb" # LODO
+#  end
 
 
 end

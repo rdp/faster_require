@@ -133,12 +133,12 @@ module FastRequire
   
   IN_PROCESS = []
   ALL_IN_PROCESS = []
-  
+  @@count = 0
   public
   
   def require_cached lib
     lib = lib.to_s # might not be zactly 1.9 compat... to_path ??
-    ALL_IN_PROCESS << lib
+    ALL_IN_PROCESS << [lib, @@count += 1]
     begin
       p 'doing require ' + lib + ' from ' + caller[-1] if $FAST_REQUIRE_DEBUG
       if known_loc = @@require_locs[lib]
@@ -162,6 +162,7 @@ module FastRequire
                   puts 'doing cached loc eval on ' + lib + '=>' + known_loc + " with stack:" + IN_PROCESS.join(' ')
                 end
                 $LOADED_FEATURES << known_loc
+                $LOADED_FEATURES << lib.to_s
                 # fakely add the load path, too, so that autoload for the same file/path in gems will work <sigh> [rspec2]
                 no_suffix_full_path = known_loc.gsub(/\.[^.]+$/, '')
                 no_suffix_lib = lib.gsub(/\.[^.]+$/, '')
@@ -237,7 +238,7 @@ module FastRequire
         end
       end
     ensure
-      raise 'huh' unless ALL_IN_PROCESS.pop == lib
+      raise 'huh' unless ALL_IN_PROCESS.pop[0] == lib
     end
   end
 
