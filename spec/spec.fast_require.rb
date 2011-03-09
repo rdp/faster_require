@@ -132,14 +132,16 @@ describe "requires faster!" do
     ruby "files/gem_before.rb"    
   end  
   
-  it "should not double load gems" do
-    for filename in ['gem_after.rb', 'load_various_gems.rb', 'load_various_gems2.rb'] do
+ ['gem_after.rb', 'load_various_gems.rb', 'load_various_gems2.rb', 'load_various_gems3.rb'].each{|filename| 
+    it "should not double load gems #{filename}" do
       3.times {
         a = `#{@ruby} files/#{filename} 2>&1`
         a.should_not match('already initialized')
+        a.should_not match('from ') # a backtrace...
+        a.length.should be > 0
       }
     end
- end
+  }
 
   it "should throw if you require itself twice" do
     Dir.chdir('files') do
