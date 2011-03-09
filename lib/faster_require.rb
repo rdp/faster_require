@@ -162,7 +162,7 @@ module FastRequire
                   puts 'doing cached loc eval on ' + lib + '=>' + known_loc + " with stack:" + IN_PROCESS.join(' ')
                 end
                 $LOADED_FEATURES << known_loc
-                $LOADED_FEATURES << lib.to_s
+                $LOADED_FEATURES << lib
                 # fakely add the load path, too, so that autoload for the same file/path in gems will work <sigh> [rspec2]
                 no_suffix_full_path = known_loc.gsub(/\.[^.]+$/, '')
                 no_suffix_lib = lib.gsub(/\.[^.]+$/, '')
