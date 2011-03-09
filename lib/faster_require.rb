@@ -132,106 +132,112 @@ module FastRequire
   end
   
   IN_PROCESS = []
+  ALL_IN_PROCESS = []
   
   public
   
   def require_cached lib
     lib = lib.to_s # might not be zactly 1.9 compat... to_path ??
-    p 'doing require ' + lib + ' from ' + caller[-1] if $FAST_REQUIRE_DEBUG
-    if known_loc = @@require_locs[lib]
-      if @@already_loaded[known_loc]
-        p 'already loaded ' + known_loc + ' ' + lib if $FAST_REQUIRE_DEBUG
-        return false 
-      end
-      @@already_loaded[known_loc] = true
-      if known_loc =~ /\.#{RbConfig::CONFIG['DLEXT']}$/
-        puts 'doing original_non_cached_require on .so full path ' + known_loc if $FAST_REQUIRE_DEBUG
-        original_non_cached_require known_loc # not much we can do there...too bad...well at least we pass it a full path though :P
+    ALL_IN_PROCESS << lib
+    begin
+      p 'doing require ' + lib + ' from ' + caller[-1] if $FAST_REQUIRE_DEBUG
+      if known_loc = @@require_locs[lib]
+        if @@already_loaded[known_loc]
+          p 'already loaded ' + known_loc + ' ' + lib if $FAST_REQUIRE_DEBUG
+          return false 
+        end
+        @@already_loaded[known_loc] = true
+        if known_loc =~ /\.#{RbConfig::CONFIG['DLEXT']}$/
+          puts 'doing original_non_cached_require on .so full path ' + known_loc if $FAST_REQUIRE_DEBUG
+          original_non_cached_require known_loc # not much we can do there...too bad...well at least we pass it a full path though :P
+        else
+          unless $LOADED_FEATURES.include? known_loc
+            if known_loc =~ /rubygems.rb$/
+              puts 'requiring rubygems ' + lib if $FAST_REQUIRE_DEBUG
+              original_non_cached_require(lib) # revert to normal require so rubygems doesn't freak out when it finds itself already in $LOADED_FEATURES with rubygems > 1.6 :P
+            else
+              IN_PROCESS << known_loc
+              begin
+                if $FAST_REQUIRE_DEBUG
+                  puts 'doing cached loc eval on ' + lib + '=>' + known_loc + " with stack:" + IN_PROCESS.join(' ')
+                end
+                $LOADED_FEATURES << known_loc
+                # fakely add the load path, too, so that autoload for the same file/path in gems will work <sigh> [rspec2]
+                no_suffix_full_path = known_loc.gsub(/\.[^.]+$/, '')
+                no_suffix_lib = lib.gsub(/\.[^.]+$/, '')
+                libs_path = no_suffix_full_path.gsub(no_suffix_lib, '')
+                libs_path = File.expand_path(libs_path) # strip off trailing '/'
+                $: << libs_path unless $:.index(libs_path)
+                # load(known_loc, false) # too slow
+                eval(File.open(known_loc, 'rb') {|f| f.read}, TOPLEVEL_BINDING, known_loc) # note the 'rb' here--this means it's reading .rb files as binary, which *typically* works...maybe unnecessary though?
+              ensure
+                raise 'unexpected' unless IN_PROCESS.pop == known_loc
+              end
+              # --if it breaks re-save the offending file in binary mode, or file an issue on the tracker...
+              return true
+            end
+          else
+            puts 'ignoring already loaded [circular require?] ' + known_loc + ' ' + lib if $FAST_REQUIRE_DEBUG
+          end
+        end
       else
-        unless $LOADED_FEATURES.include? known_loc
-          if known_loc =~ /rubygems.rb$/
-            puts 'requiring rubygems ' + lib if $FAST_REQUIRE_DEBUG
-            original_non_cached_require(lib) # revert to normal require so rubygems doesn't freak out when it finds itself already in $LOADED_FEATURES with rubygems > 1.6 :P
+        # we don't know the location--let Ruby's original require do the heavy lifting for us here
+        old = $LOADED_FEATURES.dup
+        if(original_non_cached_require(lib))
+          # debugger might land here the first time you run a script and it doesn't have a require
+          # cached yet...
+          new = $LOADED_FEATURES - old
+          found = new.last
+  
+          # incredibly, in 1.8.x, this doesn't always get set to a full path.
+          if RUBY_VERSION < '1.9'
+            if !File.file?(found)
+              # discover the full path.
+              dir = $:.find{|path| File.file?(path + '/' + found)}
+              return true unless dir # give up, case jruby socket.jar "mysterious"
+              found = dir + '/' + found
+            end
+            found = File.expand_path(found);
+          end
+          puts 'found new loc:' + lib + '=>' + found if $FAST_REQUIRE_DEBUG
+          @@require_locs[lib] = found
+          @@already_loaded[found] = true
+          return true
+        else
+        
+          # this is expected if it's for libraries required before faster_require was [like rbconfig]
+          # raise 'actually expected' + lib if RUBY_VERSION >= '1.9.0'
+          puts 'already loaded, apparently [require returned false], trying to discover how it was redundant... ' + lib if $FAST_REQUIRE_DEBUG
+          # this probably was something like
+          # the first pass was require 'regdeferred'
+          # now it's a different require 'regdeferred.rb'
+          # which fails (or vice versa)
+          # so figure out why
+          # calc location, expand, map back
+          where_found = FastRequire.guess_discover(lib, true)
+          if where_found
+            puts 'inferred lib loc:' + lib + '=>' + where_found if $FAST_REQUIRE_DEBUG
+            @@require_locs[lib] = where_found
+            # unfortunately if it's our first pass
+            # and we are in the middle of a "real" require
+            # that is circular
+            # then $LOADED_FEATURES or (AFAIK) nothing will have been set
+            # for us to be able to assert that
+            # so...I think we'll end up
+            # just fudging for a bit
+            #	raise 'not found' unless @@already_loaded[where_found] # should have already been set...I think...
           else
             if $FAST_REQUIRE_DEBUG
-              puts 'doing cached loc eval on ' + lib + '=>' + known_loc 
+              # happens for enumerator XXXX
+              puts 'unable to infer ' + lib + ' location' if $FAST_REQUIRE_DEBUG
+              @@already_loaded[found] = true # so hacky...
             end
-            $LOADED_FEATURES << known_loc
-            # fakely add the load path, too, so that autoload for the same file/path in gems will work <sigh> [rspec2]
-            no_suffix_full_path = known_loc.gsub(/\.[^.]+$/, '')
-            no_suffix_lib = lib.gsub(/\.[^.]+$/, '')
-            libs_path = no_suffix_full_path.gsub(no_suffix_lib, '')
-            libs_path = File.expand_path(libs_path) # strip off trailing '/'
-            $: << libs_path unless $:.index(libs_path)
-            # load(known_loc, false) # too slow
-            IN_PROCESS << known_loc
-            begin
-              eval(File.open(known_loc, 'rb') {|f| f.read}, TOPLEVEL_BINDING, known_loc) # note the 'rb' here--this means it's reading .rb files as binary, which *typically* works...maybe unnecessary though?
-            ensure
-              raise 'unexpected' unless IN_PROCESS.pop == known_loc
-            end
-            # --if it breaks re-save the offending file in binary mode, or file an issue on the tracker...
-            return true
           end
-        else
-          puts 'ignoring already loaded [circular require?] ' + known_loc + ' ' + lib if $FAST_REQUIRE_DEBUG
+          return false # XXXX test all these return values
         end
       end
-    else
-      # we don't know the location--let Ruby's original require do the heavy lifting for us here
-      old = $LOADED_FEATURES.dup
-      if(original_non_cached_require(lib))
-        # debugger might land here the first time you run a script and it doesn't have a require
-        # cached yet...
-        new = $LOADED_FEATURES - old
-        found = new.last
-
-        # incredibly, in 1.8.x, this doesn't always get set to a full path.
-        if RUBY_VERSION < '1.9'
-          if !File.file?(found)
-            # discover the full path.
-            dir = $:.find{|path| File.file?(path + '/' + found)}
-            return true unless dir # give up, case jruby socket.jar "mysterious"
-            found = dir + '/' + found
-          end
-          found = File.expand_path(found);
-        end
-        puts 'found new loc:' + lib + '=>' + found if $FAST_REQUIRE_DEBUG
-        @@require_locs[lib] = found
-        @@already_loaded[found] = true
-        return true
-      else
-      
-        # this is expected if it's for libraries required before faster_require was [like rbconfig]
-        # raise 'actually expected' + lib if RUBY_VERSION >= '1.9.0'
-        puts 'already loaded, apparently [require returned false], trying to discover how it was redundant... ' + lib if $FAST_REQUIRE_DEBUG
-        # this probably was something like
-        # the first pass was require 'regdeferred'
-        # now it's a different require 'regdeferred.rb'
-        # which fails (or vice versa)
-        # so figure out why
-        # calc location, expand, map back
-        where_found = FastRequire.guess_discover(lib, true)
-        if where_found
-          puts 'inferred lib loc:' + lib + '=>' + where_found if $FAST_REQUIRE_DEBUG
-          @@require_locs[lib] = where_found
-          # unfortunately if it's our first pass
-          # and we are in the middle of a "real" require
-          # that is circular
-          # then $LOADED_FEATURES or (AFAIK) nothing will have been set
-          # for us to be able to assert that
-          # so...I think we'll end up
-          # just fudging for a bit
-          #	raise 'not found' unless @@already_loaded[where_found] # should have already been set...I think...
-        else
-          if $FAST_REQUIRE_DEBUG
-            # happens for enumerator XXXX
-            puts 'unable to infer ' + lib + ' location' if $FAST_REQUIRE_DEBUG
-            @@already_loaded[found] = true # so hacky...
-          end
-        end
-        return false # XXXX test all these return values
-      end
+    ensure
+      raise 'huh' unless ALL_IN_PROCESS.pop == lib
     end
   end
 
