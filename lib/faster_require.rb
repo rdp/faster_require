@@ -131,11 +131,13 @@ module FastRequire
    caller[-2]
   end
   
+  IN_PROCESS = []
+  
   public
   
   def require_cached lib
     lib = lib.to_s # might not be zactly 1.9 compat... to_path ??
-    p 'doing require ' + lib + ' ' + caller[-1] if $FAST_REQUIRE_DEBUG
+    p 'doing require ' + lib + ' from ' + caller[-1] if $FAST_REQUIRE_DEBUG
     if known_loc = @@require_locs[lib]
       if @@already_loaded[known_loc]
         p 'already loaded ' + known_loc + ' ' + lib if $FAST_REQUIRE_DEBUG
@@ -155,14 +157,19 @@ module FastRequire
               puts 'doing cached loc eval on ' + lib + '=>' + known_loc 
             end
             $LOADED_FEATURES << known_loc
-            # fakely add the load path, too, so that autoload for the same file will work <sigh> [rspec2]
+            # fakely add the load path, too, so that autoload for the same file/path in gems will work <sigh> [rspec2]
             no_suffix_full_path = known_loc.gsub(/\.[^.]+$/, '')
             no_suffix_lib = lib.gsub(/\.[^.]+$/, '')
             libs_path = no_suffix_full_path.gsub(no_suffix_lib, '')
             libs_path = File.expand_path(libs_path) # strip off trailing '/'
             $: << libs_path unless $:.index(libs_path)
             # load(known_loc, false) # too slow
-            eval(File.open(known_loc, 'rb') {|f| f.read}, TOPLEVEL_BINDING, known_loc) # note the rb here--this means it's reading .rb files as binary, which *typically* works...maybe unnecessary?
+            IN_PROCESS << known_loc
+            begin
+              eval(File.open(known_loc, 'rb') {|f| f.read}, TOPLEVEL_BINDING, known_loc) # note the 'rb' here--this means it's reading .rb files as binary, which *typically* works...maybe unnecessary though?
+            ensure
+              raise 'unexpected' unless IN_PROCESS.pop == known_loc
+            end
             # --if it breaks re-save the offending file in binary mode, or file an issue on the tracker...
             return true
           end
@@ -219,7 +226,7 @@ module FastRequire
         else
           if $FAST_REQUIRE_DEBUG
             # happens for enumerator XXXX
-            puts 'unable to infer' + lib + ' in ' if $FAST_REQUIRE_DEBUG
+            puts 'unable to infer ' + lib + ' location' if $FAST_REQUIRE_DEBUG
             @@already_loaded[found] = true # so hacky...
           end
         end
