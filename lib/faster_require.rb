@@ -184,7 +184,12 @@ module FastRequire
                 $LOADED_FEATURES << relative_full_path # add in with .rb, too. 
                   
                 # load(known_loc, false) # too slow
-                eval(File.open(known_loc, 'rb') {|f| f.read}, TOPLEVEL_BINDING, known_loc) # note the 'rb' here--this means it's reading .rb files as binary, which *typically* works...maybe unnecessary though?
+                contents = File.open(known_loc, 'rb') {|f| f.read}
+                if contents =~ /require_relative/ # =~ is faster than .include? it appears
+                  load(known_loc, false) # slow, but dependent on a ruby core bug: http://redmine.ruby-lang.org/issues/4487
+                else
+                  eval(contents, TOPLEVEL_BINDING, known_loc) # note the 'rb' here--this means it's reading .rb files as binary, which *typically* works...maybe unnecessary though?
+                end
               ensure
                 raise 'unexpected' unless IN_PROCESS.pop == known_loc
               end
