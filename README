@@ -29,7 +29,7 @@ rails app, running a unit test file
    with:
       14s
 
-rails app, running script/console "puts 333"
+rails app, running $ script/console "puts 333"
 
  1.9.1
    without:
@@ -55,9 +55,6 @@ running "rake -T"
    
 Note: in reality what we should do is fix core so that it doesn't have such awful I/O time in windows.  There may be some gross inefficiency in there.  For now, this is a work-around.
    
-[1] If anybody asks me for it, I'll come up with a way to *always* preload this when using rubygems, to speed up "everything" [hopefully].  Note also that
-if things get corrupted or messed up, you can run the (included) faster_require command/script ($ faster_require --clear-cache) and it will clear it.
-
 == How to use in Rails ==
 
 You can either install the gem, then add a
@@ -73,7 +70,7 @@ $ gem unpack faster_require
 
 Now add this line to your config/environment.rb:
 
-require File.dirname(__FILE__) + "/../lib/faster_require-0.7.0/lib/faster_require" # faster speeds all around...make sure to update it to whatever version number you downloaded.
+require File.dirname(__FILE__) + "/../lib/faster_require-0.7.0/lib/faster_require" # faster speeds all around...make sure to update it to whatever version number you fetched.
 
 add it *before* this other (existing) line:
 
@@ -81,6 +78,28 @@ require File.join(File.dirname(__FILE__), 'boot')
 
 Now it will speedup loading rubygems and everything. Happiness.
 
-Any problems report back: https://github.com/rdp/faster_require
+== clearing cache ==
+
+If you use bundler to change bundled gems, you'll want to run the command $ faster_require --clear-cache
+so that it will pick up the new load paths.  Also if you moves files around to new paths, you may want to do the same.
+As you install any new gems, it should clear the paths automatically for you.
+
+== How to use generally ==
+
+You can install it to be used "always" (well, for anything that loads rubygems, at least, via something like the following):
+
+$ gem which rubygems
+d:/Ruby192/lib/ruby/site_ruby/1.9.1/rubygems.rb
+
+$ gem which faster_require
+d:/Ruby192/lib/ruby/gems/1.9.1/gems/faster_require-0.6.0/lib/faster_require.rb
+
+Now edit that rubygems.rb file, and add a require line to the top of it like this:
+
+require 'd:/Ruby192/lib/ruby/gems/1.9.1/gems/faster_require-0.6.0/lib/faster_require.rb' 
+
+update the path for your own, obviously. You'll also have to change that added line if
+you ever install a newer version of faster_require gem, or if you update your version of rubygems, 
+as the rubygems.rb file will be wiped clean at that point.
 
 Enjoy.

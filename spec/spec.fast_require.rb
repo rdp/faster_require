@@ -76,7 +76,7 @@ describe "requires faster!" do
   	end
   end
   
-  it "could cache file contents, too, in theory...oh my"
+  it "could cache the file contents, even, too, in theory...oh my"
 
   it "should not re-save the cache file if it hasn't changed [?]"
   
