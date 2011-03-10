@@ -2,15 +2,15 @@ A little utility to make
 
 require 'xxx'
 
-take much less time.  As in much less.  Well, on windows at least.
+take much less time.  As in much less.  Well, on windows at least. And to speedup how long it takes things to load in windows, like rails apps.
 
 Well, mostly on windows--on linux it's a speedup of only 0.41 to 0.45s, or so. [1]
 
-If you've ever wondered why ruby feels slow on doze...sometimes it's just the startup time.  This helps.
+If you've ever wondered why ruby feels slow on doze...sometimes it's just the startup time.  This really helps.
 
 Benchmarks:
 
-loading a spec file:
+loading a (blank) rspec file:
 
   1.9.1   
     without 3.20s
@@ -47,8 +47,8 @@ running "rake -T"
    
 Note: in reality what we should do is fix core so that it doesn't have such awful I/O time in windows.  There may be some gross inefficiency in there.  For now, this is a work-around.
    
-[1] A sister project to this one, faster_gem_script, can make ruby scripts in linux run faster by 0.1s :) http://github.com/rdp/faster_gem_script
-(in windows it's a much higher gain).  Eventually they'll be combined into one "gem optimizer" gem.
+[1] If anybody asks me for it, I'll come up with a way to *always* preload this when using rubygems, to speed up "everything" [hopefully].  Note also that
+if things get corrupted or messed up, you can run the (included) faster_require command/script ($ faster_require --clear-cache) and it will clear it.
 
 == How to use in Rails ==
 
@@ -56,7 +56,6 @@ You can either install the gem, then add a
 
 require 'rubygems'
 require 'faster_require'
-
 
 in your config/environment.rb, or (the best way is as follows):
 
@@ -66,9 +65,9 @@ $ gem unpack faster_require
 
 Now add this line to your config/environment.rb:
 
-require File.dirname(__FILE__) + "/../lib/faster_require-0.7.0/lib/faster_require" # faster speeds all around...
+require File.dirname(__FILE__) + "/../lib/faster_require-0.7.0/lib/faster_require" # faster speeds all around...make sure to update it to whatever version number you downloaded.
 
-*before* this other (existing) line:
+add it *before* this other (existing) line:
 
 require File.join(File.dirname(__FILE__), 'boot')
 
