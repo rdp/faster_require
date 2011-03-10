@@ -79,7 +79,7 @@ add it *before* this other (existing) line:
 
 require File.join(File.dirname(__FILE__), 'boot')
 
-Now it will speedup loading rubygems and everything. Happiness.
+Now it will speedup loading rubygems and everything. Happiness. (NB that setting it this will also run in production mode code, so be careful here).
 
 Any problems report back: https://github.com/rdp/faster_require
 
