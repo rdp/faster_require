@@ -1,6 +1,7 @@
-advertise if quiet for a week after 3/10/11
+advertise more everywhere if quiet for a week after 3/10/11
 stringio
 if ruby < 1.9 for autoload stuff
 benchmarks jruby et al
 running rails seems to still have some redundancies in there [?]
 "does it slow us down"
+issues
