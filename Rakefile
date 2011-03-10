@@ -14,7 +14,8 @@ end
     s.homepage = "http://github.com/rdp/faster_require"
     s.authors = ["Roger Pack"]
     s.add_development_dependency 'redparse'
-    s.add_development_dependency 'active_support', '= 2.3.10'
+    s.add_development_dependency 'activesupport', '= 2.3.10'
+    s.add_development_dependency 'actionpack', '= 2.3.10'
 #    s.add_development_dependency 'ruby-debug' too... or ruby-debug19 pick your poison
     s.add_development_dependency 'jeweler'
     s.add_development_dependency 'rspec', '>= 2'

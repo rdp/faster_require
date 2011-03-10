@@ -1,0 +1,3 @@
+0.7.1: Accomodate for non HOME environment variable [what the..]
+
+0.7.0: now it works with autoload finally [and thus hopefully rails]

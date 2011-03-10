@@ -1,12 +1,20 @@
 require 'rbconfig'
-#require 'rubygems'
-#require 'ruby-debug'
 
 module FastRequire
   $FAST_REQUIRE_DEBUG ||= $DEBUG # can set via $DEBUG, or on its own.
 
   def self.setup
-    @@dir = File.expand_path('~/.ruby_faster_require_cache')
+    begin
+     @@dir = File.expand_path('~/.ruby_faster_require_cache')
+    rescue ArgumentError => e # like  couldn't find HOME environment or the like
+     whoami = `whoami`.strip
+     if File.directory?(home = "/home/#{whoami}") # assume writable :P
+      @@dir = home + '/.ruby_faster_require_cache'
+     else
+       raise e
+     end
+    end
+
     Dir.mkdir @@dir unless File.directory?(@@dir)
     
     parts = [File.basename($0), RUBY_VERSION, RUBY_PLATFORM, File.basename(Dir.pwd), Dir.pwd, File.dirname($0), File.expand_path(File.dirname($0))].map{|part| sanitize(part)}
@@ -284,5 +292,4 @@ module Kernel
     alias :original_non_cached_require :require
     alias :require :require_cached
   end
-
 end
