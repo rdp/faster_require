@@ -1,3 +1,5 @@
+0.7.3: work with 1.9 require_relative
+
 0.7.1: Accomodate for non HOME environment variable [what the..]
 
 0.7.0: now it works with autoload finally [and thus hopefully rails]
