@@ -3,3 +3,4 @@ stringio
 if ruby < 1.9 for autoload stuff
 benchmarks jruby et al
 running rails seems to still have some redundancies in there [?]
+"does it slow us down"

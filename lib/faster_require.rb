@@ -177,11 +177,12 @@ module FastRequire
                 no_suffix_lib = lib.gsub(/\.[^.]+$/, '')
                 libs_path = no_suffix_full_path.gsub(no_suffix_lib, '')
                 libs_path = File.expand_path(libs_path) # strip off trailing '/'
-                $: << libs_path unless $:.index(libs_path)
+                $: << libs_path unless $:.index(libs_path) # might not need this anymore, but it feels more sane...does it slow us down, though?
+                
                 # try some more autoload conivings...so that it won't attempt to autoload if it runs into it later...
                 relative_full_path = known_loc.sub(libs_path, '')[1..-1]
+                $LOADED_FEATURES << relative_full_path unless $LOADED_FEATURES.index(relative_full_path) # add in with .rb, too, for autoload 
             #    $LOADED_FEATURES << relative_full_path.gsub('.rb', '') # don't think you need this one
-                $LOADED_FEATURES << relative_full_path # add in with .rb, too. 
                   
                 # load(known_loc, false) # too slow
                 contents = File.open(known_loc, 'rb') {|f| f.read}
