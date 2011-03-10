@@ -20,6 +20,7 @@ end
     s.add_development_dependency 'jeweler'
     s.add_development_dependency 'rspec', '>= 2'
     s.add_development_dependency 'sane'
+    s.add_development_dependency 'facets'
     s.add_development_dependency 'ruby-prof'
     # s.add_dependency
   end

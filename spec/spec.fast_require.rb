@@ -1,11 +1,10 @@
-# can set this: $FAST_REQUIRE_DEBUG
+# could also  set this here if desired: $FAST_REQUIRE_DEBUG = true
 
-if RUBY_VERSION < '1.9'
-  require 'rubygems' # faster_rubygems, perhaps?
-end
-
+require 'rubygems' # faster_rubygems, perhaps?
 require 'sane'
 require 'benchmark'
+
+raise 'double faster_require' if defined?($already_using_faster_require) # disallowed, since who knows what version the gem one is...
 
 unless RUBY_PLATFORM =~ /java/
  require_relative '../lib/faster_require'
@@ -68,11 +67,15 @@ describe "requires faster!" do
     end
   end
   
+  it "should load rubygems for speed look" do
+    slow = Benchmark.realtime { assert system("#{OS.ruby_bin} files/time_just_loading_rubygems.rb")}
+    fast = Benchmark.realtime { assert system("#{OS.ruby_bin} files/time_just_loading_rubygems.rb")}
+    pps 'just loading rubygems [obviously depends on number of gems installed] at all: fast', fast, 'slow', slow
+  end
+  
   it "should work with large complex gem" do
   	Dir.chdir('files') do
-  		assert(system("#{OS.ruby_bin} large.rb"))
-  		assert(system("#{OS.ruby_bin} large.rb"))
-  		assert(system("#{OS.ruby_bin} large.rb"))
+  		3.times { assert(system("#{OS.ruby_bin} large.rb")) }
   	end
   end
   
@@ -82,7 +85,7 @@ describe "requires faster!" do
   
   it "should load .so files still, and only load them once" do
     # ruby-prof gem
-    2.times { require 'ruby_prof.so'; RubyProf }
+    3.times { require 'ruby_prof.so'; RubyProf }
     assert $LOADED_FEATURES.length == (@old_length + 1)
   end
 
@@ -106,17 +109,13 @@ describe "requires faster!" do
    	  assert system("ruby -I../../lib e.rb")
    	  assert system("ruby -C.. -I../lib files/e.rb")
    end
- # require 'ruby-debug'
-#  debugger
    assert Dir[FastRequire.dir + '/*'].length == 3    
    assert Dir[FastRequire.dir + '/*d.rb*'].length == 1 # use full path
    assert Dir[FastRequire.dir + '/*e.rb*'].length == 2 # different Dir.pwd's
   end
     
-  context "should work with ascii files well" do # most are binary, so...low prio
-    it "could cache the converted file, if that speeds things up"
-  end
-  
+  it "should work with encoded files too" # most are binary, so...low prio
+
   private
   
   def ruby filename
@@ -132,7 +131,7 @@ describe "requires faster!" do
     ruby "files/gem_before.rb"    
   end  
   
- ['gem_after.rb', 'load_various_gems.rb', 'load_various_gems2.rb', 'active_support_no_double_load.rb', 'fast.rb'].each{|filename| 
+ ['require_facets.rb', 'gem_after.rb', 'load_various_gems.rb', 'load_various_gems2.rb', 'active_support_no_double_load.rb', 'fast.rb'].each{|filename| 
     it "should not double load gems #{filename}" do
       3.times {
         a = `#{@ruby} -v files/#{filename} 2>&1`
@@ -144,9 +143,10 @@ describe "requires faster!" do
     end
   }
 
-  it "should throw if you require itself twice" do
+  it "should be ok if you require itself twice" do
     Dir.chdir('files') do
-      assert !system(@ruby + 'attempt_double_load.rb')
+      3.times { assert system(@ruby + 'attempt_double_load.rb') }
+      assert `#{@ruby + 'attempt_double_load.rb'}` =~ /double load expected/
     end
   end
   

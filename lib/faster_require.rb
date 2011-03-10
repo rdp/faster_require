@@ -1,8 +1,18 @@
-require 'rbconfig'
+
+if(defined?($already_using_faster_require))
+  p 'warning: faster_require double load expected?' if $FAST_REQUIRE_DEBUG
+  local_version = File.read(File.dirname(__FILE__) + "/../VERSION")
+  raise 'mismatched faster_require version' unless local_version == FastRequire::VERSION
+else
+$already_using_faster_require = true
+
+# now load it...
+
+require 'rbconfig' # maybe could cache this one, too?
 
 module FastRequire
   $FAST_REQUIRE_DEBUG ||= $DEBUG # can set via $DEBUG, or on its own.
-
+  VERSION = File.read(File.dirname(__FILE__) + "/../VERSION")
   def self.setup
     begin
      @@dir = File.expand_path('~/.ruby_faster_require_cache')
@@ -204,6 +214,7 @@ module FastRequire
       else
         # we don't know the location--let Ruby's original require do the heavy lifting for us here
         old = $LOADED_FEATURES.dup
+        p 'doing old non-known location require ' + lib if $FAST_REQUIRE_DEBUG
         if(original_non_cached_require(lib))
           # debugger might land here the first time you run a script and it doesn't have a require
           # cached yet...
@@ -266,10 +277,6 @@ end
 
 module Kernel
 
-  if(defined?(@already_using_faster_require))
-    raise 'loading twice not allowed...we should never get here!'
-  end
-  @already_using_faster_require = true
   # overwrite old require...
   include FastRequire
   if defined?(gem_original_require)
@@ -298,4 +305,7 @@ module Kernel
     alias :original_non_cached_require :require
     alias :require :require_cached
   end
+end
+
+
 end
