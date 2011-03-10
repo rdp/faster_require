@@ -20,6 +20,14 @@ loading a (blank) rspec file:
     without 3.6s
     with 1.25s
     
+    
+rails app, running a unit test file
+
+ 1.8.6
+   without:
+      23s
+   with:
+      14s
 
 rails app, running script/console "puts 333"
 
