@@ -1,4 +1,6 @@
 require 'rbconfig'
+#require 'rubygems'
+#require 'ruby-debug'
 
 module FastRequire
   $FAST_REQUIRE_DEBUG ||= $DEBUG # can set via $DEBUG, or on its own.
@@ -162,13 +164,17 @@ module FastRequire
                   puts 'doing cached loc eval on ' + lib + '=>' + known_loc + " with stack:" + IN_PROCESS.join(' ')
                 end
                 $LOADED_FEATURES << known_loc
-                $LOADED_FEATURES << lib
                 # fakely add the load path, too, so that autoload for the same file/path in gems will work <sigh> [rspec2]
                 no_suffix_full_path = known_loc.gsub(/\.[^.]+$/, '')
                 no_suffix_lib = lib.gsub(/\.[^.]+$/, '')
                 libs_path = no_suffix_full_path.gsub(no_suffix_lib, '')
                 libs_path = File.expand_path(libs_path) # strip off trailing '/'
                 $: << libs_path unless $:.index(libs_path)
+                # try some more autoload conivings...so that it won't attempt to autoload if it runs into it later...
+                relative_full_path = known_loc.sub(libs_path, '')[1..-1]
+            #    $LOADED_FEATURES << relative_full_path.gsub('.rb', '') # don't think you need this one
+                $LOADED_FEATURES << relative_full_path # add in with .rb, too. 
+                  
                 # load(known_loc, false) # too slow
                 eval(File.open(known_loc, 'rb') {|f| f.read}, TOPLEVEL_BINDING, known_loc) # note the 'rb' here--this means it's reading .rb files as binary, which *typically* works...maybe unnecessary though?
               ensure
@@ -256,9 +262,9 @@ module Kernel
     class << self
       alias :original_remove_method :remove_method
       
-      def remove_method method
+      def remove_method method # I think this actually might be needed <sigh>
         if method.to_s == 'require'
-          p 'doing nothing'
+          #p 'not removing old require, since that\'s ours now'
         else
           original_remove_method method
         end

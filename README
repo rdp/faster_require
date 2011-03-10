@@ -2,7 +2,7 @@ A little utility to make
 
 require 'xxx'
 
-take much less time.
+take much less time.  As in much less.  Well, on windows at least.
 
 Well, mostly on windows--on linux it's a speedup of only 0.41 to 0.45s, or so. [1]
 
@@ -35,7 +35,7 @@ rails app, running script/console "puts 333"
    with:
        6s
        
-rake -T
+running "rake -T"
 
  1.9.1
    without: 3.75s
@@ -49,3 +49,31 @@ Note: in reality what we should do is fix core so that it doesn't have such awfu
    
 [1] A sister project to this one, faster_gem_script, can make ruby scripts in linux run faster by 0.1s :) http://github.com/rdp/faster_gem_script
 (in windows it's a much higher gain).  Eventually they'll be combined into one "gem optimizer" gem.
+
+== How to use in Rails ==
+
+You can either install the gem, then add a
+
+require 'rubygems'
+require 'faster_require'
+
+
+in your config/environment.rb, or (the best way is as follows):
+
+Unpack it somewhere, like lib
+$ cd my_rails_app/lib
+$ gem unpack faster_require
+
+Now add this line to your config/environment.rb:
+
+require File.dirname(__FILE__) + "/../lib/faster_require-0.7.0/lib/faster_require" # faster speeds all around...
+
+*before* this other (existing) line:
+
+require File.join(File.dirname(__FILE__), 'boot')
+
+Now it will speedup loading rubygems and everything. Happiness.
+
+Any problems report back: https://github.com/rdp/faster_require
+
+Enjoy.

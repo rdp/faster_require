@@ -132,13 +132,13 @@ describe "requires faster!" do
     ruby "files/gem_before.rb"    
   end  
   
- ['gem_after.rb', 'load_various_gems.rb', 'load_various_gems2.rb', 'load_various_gems3.rb', 'fast.rb'].each{|filename| 
+ ['gem_after.rb', 'load_various_gems.rb', 'load_various_gems2.rb', 'active_support_no_double_load.rb', 'fast.rb'].each{|filename| 
     it "should not double load gems #{filename}" do
       3.times {
         a = `#{@ruby} -v files/#{filename} 2>&1`
         a.should_not match('already initialized')
         a.should_not match('from ') # an error backtrace...
-        a.should_not match(' warning: method redefined')
+        a.should_not match('discarding old deep_const_get')
         a.length.should be > 0
       }
     end
@@ -186,7 +186,7 @@ describe "requires faster!" do
   end
   
   it "should be able to infer .so files like socket.so" #do
-#    ruby "files/load_socket.rb" # LODO
+#    ruby "files/socket_load.rb" # LODO reproduce failure
 #  end
 
 
