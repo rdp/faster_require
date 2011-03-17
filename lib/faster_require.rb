@@ -27,8 +27,8 @@ module FastRequire
 
     Dir.mkdir @@dir unless File.directory?(@@dir)
     
-    parts = [File.basename($0), RUBY_VERSION, RUBY_PLATFORM, File.basename(Dir.pwd), Dir.pwd, File.dirname($0), File.expand_path(File.dirname($0))].map{|part| sanitize(part)}
-    loc_name = (parts.map{|part| part[0..5]} + parts).join('-')[0..75] # try to be unique, but short...
+    parts = [File.basename($0), RUBY_DESCRIPTION, File.basename(Dir.pwd), Dir.pwd, File.dirname($0), File.expand_path(File.dirname($0))].map{|part| sanitize(part)}
+    loc_name = (parts.map{|part| part[0..5]} + parts).join('-')[0..75] + parts.join('').hash.to_s # try to be unique, but not too long of a filename, for restrictions on filename length
     @@loc = @@dir + '/' + loc_name
   end
 
@@ -195,7 +195,7 @@ module FastRequire
             #    $LOADED_FEATURES << relative_full_path.gsub('.rb', '') # don't think you need this one
                   
                 # load(known_loc, false) # too slow
-                contents = File.open(known_loc, 'rb') {|f| f.read}
+                contents = File.open(known_loc, 'rb') {|f| f.read} # only costs 0.34/10 s...
                 if contents =~ /require_relative/ # =~ is faster than .include? it appears
                   load(known_loc, false) # slow, but dependent on a ruby core bug: http://redmine.ruby-lang.org/issues/4487
                 else
@@ -293,11 +293,6 @@ module Kernel
     
     end
     
-  #  unused?
-  #    def remove_method method
-  #     p 'in mine2'
-  #    end
-  
     # similarly overwrite this one...I guess...1.9.x...rubygems uses this as its default...I think...
     alias :original_non_cached_require :gem_original_require
     alias :gem_original_require :require_cached
