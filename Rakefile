@@ -1,5 +1,7 @@
-  require 'rubygems' if RUBY_VERSION < "1.9'"
-  
+require 'rubygems' if RUBY_VERSION < "1.9'"
+
+ENV['PATH'] = 'C:\Program Files\Git\bin;' + ENV['PATH']
+
 begin
   require 'psych' # sigh
 rescue ::LoadError

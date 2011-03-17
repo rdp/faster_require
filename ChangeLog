@@ -1,3 +1,5 @@
+0.7.5: unique hash now, for the cache file [hopefuly]
+
 0.7.4: allow double loading, for rails apps and gems to load it.
 
 0.7.3: work with 1.9 require_relative
