@@ -235,19 +235,19 @@ module FastRequire
                 # try some more autoload conivings...so that it won't attempt to autoload if it runs into it later...
                 relative_full_path = known_loc.sub(libs_path, '')[1..-1]
                 $LOADED_FEATURES << relative_full_path unless $LOADED_FEATURES.index(relative_full_path) # add in with .rb, too, for autoload 
-            #    $LOADED_FEATURES << relative_full_path.gsub('.rb', '') # don't think you need this one
                   
                 # load(known_loc, false) # too slow
-                contents = File.open(known_loc, 'rb') {|f| f.read} # only costs 0.34/10 s...
-                if contents =~ /require_relative/ # =~ is faster than .include? it appears
-                  load(known_loc, false) # slow, but dependent on a ruby core bug: http://redmine.ruby-lang.org/issues/4487
+                
+                # use eval: if this fails to load breaks re-save the offending file in binary mode, or file an issue on the faster_require tracker...
+                contents = File.open(known_loc, 'rb') {|f| f.read} # read only costs 0.34/10.0 s...
+                if contents =~ /require_relative/ # =~ is faster apparently faster than .include?
+                  load(known_loc, false) # load is slow, but overcomes a ruby core bug: http://redmine.ruby-lang.org/issues/4487
                 else
                   eval(contents, TOPLEVEL_BINDING, known_loc) # note the 'rb' here--this means it's reading .rb files as binary, which *typically* works...maybe unnecessary though?
                 end
               ensure
                 raise 'unexpected' unless IN_PROCESS.pop == known_loc
               end
-              # --if it breaks re-save the offending file in binary mode, or file an issue on the tracker...
               return true
             end
           else
