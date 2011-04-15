@@ -1,18 +1,21 @@
 
 if(defined?($already_using_faster_require))
-  p 'warning: faster_require double load expected?' if $FAST_REQUIRE_DEBUG
+  p 'warning: faster_require double load--expected?' if $FAST_REQUIRE_DEBUG
   local_version = File.read(File.dirname(__FILE__) + "/../VERSION")
-  raise 'mismatched faster_require version' unless local_version == FastRequire::VERSION
+  raise "mismatched faster_require versions! #{local_version} != #{FastRequire::VERSION}" unless local_version == FastRequire::VERSION
 else
+  
 $already_using_faster_require = true
 
-# now load it...
+# load it...
 
-require 'rbconfig' # maybe could cache this one, too?
+require 'rbconfig' # maybe could cache this one's, too? probably not...
 
 module FastRequire
-  $FAST_REQUIRE_DEBUG ||= $DEBUG # can set via $DEBUG, or on its own.
+  $FAST_REQUIRE_DEBUG ||= $DEBUG # can set this via $DEBUG, or on its own previously
+  
   VERSION = File.read(File.dirname(__FILE__) + "/../VERSION")
+  
   def self.setup
     begin
      @@dir = File.expand_path('~/.ruby_faster_require_cache')
@@ -26,9 +29,17 @@ module FastRequire
     end
 
     Dir.mkdir @@dir unless File.directory?(@@dir)
+    config = RbConfig::CONFIG
     
-    parts = [File.basename($0), RUBY_DESCRIPTION, File.basename(Dir.pwd), Dir.pwd, File.dirname($0), File.expand_path(File.dirname($0))].map{|part| sanitize(part)}
-    loc_name = (parts.map{|part| part[0..5]} + parts).join('-')[0..75] + parts.join('').hash.to_s # try to be unique, but not too long of a filename, for restrictions on filename length
+    bin_exe_name = config['bindir'] + config['ruby_install_name'] + config['EXEEXT'] # why not? [plus needed if you have two rubies, same box, same ruby description {version, patch number}]
+    
+    parts = [File.basename($0), RUBY_DESCRIPTION, File.basename(Dir.pwd), Dir.pwd, File.dirname($0), File.expand_path(File.dirname($0)), bin_exe_name]
+    sanitized_parts = parts.map{|part| sanitize(part)}
+    
+    # try to be a unique, but not too long of a filename, for restrictions on filename length in doze
+    
+    full_parts_hash = parts.hash.to_s + sanitized_parts.hash.to_s
+    loc_name = (sanitized_parts.map{|part| part[0..5] + (part[-5..-1] || '')}).join('-') + '-' + full_parts_hash + '.marsh'
     @@loc = @@dir + '/' + loc_name
   end
 
@@ -105,16 +116,10 @@ module FastRequire
   @@already_loaded[File.expand_path(__FILE__)] = true # this file itself isn't in loaded features, yet, but very soon will be..
   # a special case--I hope...
 
-  # also disallow re- $0
-  @@require_locs[$0] = File.expand_path($0) # so when we run into it on a require, we will skip it...
+  # also disallow re-loading $0
+  @@require_locs[$0] = File.expand_path($0) # so when we run into $0 on a freak require, we will skip it...
   @@already_loaded[File.expand_path($0)] = true
-
-  # XXXX within a very long depth to require fast_require,
-  # require 'a' => 'b' => 'c' => 'd' & fast_require
-  #             then
-  #             => 'b.rb'
-  # it works always
-
+  
   def self.already_loaded
     @@already_loaded
   end
@@ -141,9 +146,14 @@ module FastRequire
 
   def self.clear_all!
     require 'fileutils'
-    FileUtils.rm_rf @@dir if File.exist? @@dir
+    success = false
+    if File.exist? @@dir
+      FileUtils.rm_rf @@dir 
+      success = true
+    end
     @@require_locs.clear
     setup
+    success
   end
   
   private

@@ -132,7 +132,7 @@ describe "requires faster!" do
   end  
   
  ['require_facets.rb', 'gem_after.rb', 'load_various_gems.rb', 'load_various_gems2.rb', 'active_support_no_double_load.rb', 'fast.rb'].each{|filename| 
-    it "should not double load gems #{filename}" do
+    it "should not double load gems #{@ruby} -v files/#{filename}" do
       3.times {
         a = `#{@ruby} -v files/#{filename} 2>&1`
         a.should_not match('already initialized')
@@ -146,7 +146,7 @@ describe "requires faster!" do
   it "should be ok if you require itself twice" do
     Dir.chdir('files') do
       3.times { assert system(@ruby + 'attempt_double_load.rb') }
-      assert `#{@ruby + 'attempt_double_load.rb'}` =~ /double load expected/
+      assert `#{@ruby + 'attempt_double_load.rb'}` =~ /double load--expected\?/
     end
   end
   
@@ -185,9 +185,10 @@ describe "requires faster!" do
     end
   end
   
-  it "should be able to infer .so files like socket.so" #do
-#    ruby "files/socket_load.rb" # LODO reproduce failure
+  # was there some failure like
+  # stringio or enumerator.so?
+  it "should be able to infer .so files" #do
+#    ruby "files/socket_load.rb" # LODO reproduce failure?
 #  end
-
 
 end
