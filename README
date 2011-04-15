@@ -53,9 +53,12 @@ running "rake -T" somewhere
    without: 1.37s
    with:    1.25s
    
-Note: in reality what we should do is fix core so that it doesn't have such awful I/O time in windows.  There may be some gross inefficiency in there.  For now, this is a work-around that helps.
+Note: in reality what we should do is fix core so that it doesn't have such awful load time in windows.  There may be some inefficiency in there.  For now, this is a work-around that helps.
+
+Also it helps with SSD's even, on windows, as it avoids some cpu used at require time.
 
 == How to use ==
+
 In general, you can either use it by installing the gem, then adding
 require 'rubygems'
 require 'faster_require'
@@ -105,7 +108,7 @@ so that it will pick up any new load paths.  Also if you moves files around to n
 As you install any new gems, it should clear the paths automatically for you.
 
 
-== How to use globally ==
+== How to use generally/globally ==
 
 You can install it to be used "always" (well, for anything that loads rubygems, at least, which is most things, via something like the following):
 
@@ -122,5 +125,10 @@ require 'd:/Ruby192/lib/ruby/gems/1.9.1/gems/faster_require-0.6.0/lib/faster_req
 update the path for your own, obviously. You'll also have to change that added line if
 you ever install a newer version of faster_require gem, or if you update your version of rubygems, 
 as the rubygems.rb file will be wiped clean at that point.
+
+== See also ==
+
+Spork can help speedup rails tests.  I "should" work well when used in conjunction with faster_require, as well.
+
 
 Enjoy.
