@@ -21,7 +21,7 @@ loading a (blank) rspec file:
     with 1.25s
     
     
-rails app, running a unit test file
+rails app, running a unit test
 
  1.8.6
    without:
@@ -43,7 +43,7 @@ rails app, running $ script/console "puts 333"
    with:
        6s
        
-running "rake -T"
+running "rake -T" somewhere
 
  1.9.1
    without: 3.75s
@@ -53,40 +53,61 @@ running "rake -T"
    without: 1.37s
    with:    1.25s
    
-Note: in reality what we should do is fix core so that it doesn't have such awful I/O time in windows.  There may be some gross inefficiency in there.  For now, this is a work-around.
-   
+Note: in reality what we should do is fix core so that it doesn't have such awful I/O time in windows.  There may be some gross inefficiency in there.  For now, this is a work-around that helps.
+
+== How to use ==
+In general, you can either use it by installing the gem, then adding
+require 'rubygems'
+require 'faster_require'
+to the top of your script.
+
+However this doesn't speedup the loading of rubygems, so you can do this to get best performance:
+
+G:>gem which faster_require
+C:/installs/Ruby187/lib/ruby/gems/1.8/gems/faster_require-0.7.4/lib/faster_require.rb
+
+now before doing require rubygems in your script, do this:
+
+require 'C:/installs/Ruby187/lib/ruby/gems/1.8/gems/faster_require-0.7.4/lib/faster_require.rb'
+
+Then rubygems load will be cached too. Faster.
+
 == How to use in Rails ==
 
-You can either install the gem, then add a
+One way is to install the gem, then add a
 
 require 'rubygems'
 require 'faster_require'
 
-in your config/environment.rb, or (the best way is as follows):
+in your config/environment.rb, or (the better way is as follows):
 
 Unpack it somewhere, like lib
+
 $ cd my_rails_app/lib
 $ gem unpack faster_require
 
 Now add this line to your config/environment.rb:
 
-require File.dirname(__FILE__) + "/../lib/faster_require-0.7.0/lib/faster_require" # faster speeds all around...make sure to update it to whatever version number you fetched.
+require File.dirname(__FILE__) + "/../lib/faster_require-0.7.0/lib/faster_require" # faster speeds all around...make sure to update it to whatever version number you fetched though.
 
-add it *before* this other (existing) line:
+add that *before* this other (pre-existing) line:
 
 require File.join(File.dirname(__FILE__), 'boot')
 
-Now it will speedup loading rubygems and everything. Happiness.  (NB that setting it this will also run in production mode code, so be careful here, though it does work for me in production).
+Now faster_require will speedup loading rubygems and everything railsy. Happiness.  (NB that setting it this will also run in production mode code, so be careful here, though it does work for me fine for production).
 
-== clearing cache ==
+Ping me if it's still too slow.
+
+== Clearing the cache ==
 
 If you use bundler to change bundled gems, you'll want to run the command $ faster_require --clear-cache
-so that it will pick up the new load paths.  Also if you moves files around to new paths, you may want to do the same.
+so that it will pick up any new load paths.  Also if you moves files around to new directories, you may want to do the same.
 As you install any new gems, it should clear the paths automatically for you.
 
-== How to use generally ==
 
-You can install it to be used "always" (well, for anything that loads rubygems, at least, via something like the following):
+== How to use globally ==
+
+You can install it to be used "always" (well, for anything that loads rubygems, at least, which is most things, via something like the following):
 
 $ gem which rubygems
 d:/Ruby192/lib/ruby/site_ruby/1.9.1/rubygems.rb
