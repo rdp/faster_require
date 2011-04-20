@@ -65,7 +65,7 @@ module FastRequire
     
     # try to be a unique, but not too long, filename, for restrictions on filename length in doze
     ruby_bin_name = config['bindir'] + config['ruby_install_name'] # needed if you have two rubies, same box, same ruby description [version, patch number]
-    parts = [File.basename($0), RUBY_DESCRIPTION, RUBY_VERSION, File.basename(Dir.pwd), Dir.pwd, File.dirname($0), File.expand_path(File.dirname($0)), ruby_bin_name]
+    parts = [File.basename($0), RUBY_PATCHLEVEL.to_s, RUBY_PLATFORM, RUBY_VERSION, RUBY_VERSION, File.basename(Dir.pwd), Dir.pwd, File.dirname($0), File.expand_path(File.dirname($0)), ruby_bin_name]
     sanitized_parts = parts.map{|part| sanitize(part)}
 
     full_parts_hash = string_array_cruddy_hash(parts).to_s
