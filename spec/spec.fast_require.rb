@@ -121,8 +121,17 @@ describe "requires faster!" do
      end
      assert Dir[FastRequire.dir + '/*file_*'].length == 1 # re-use a cache for the file, despite different Dir.pwd's
   end
+  
+  it "should not die if it hits a poor cache file" do
+    FastRequire.clear_all!
+    assert system("ruby -Ilib files/fast.rb")
+    files =  Dir[FastRequire.dir + '/*']
+    assert files.length == 1
+    File.open(files[0], 'w') {} # clear it, which is bad marshal data
+    assert system("ruby -Ilib files/fast.rb")
+  end
     
-  it "should work with encoded files too" # most are binary, so...low prio
+  it "should work with encoded files too" # most are ascii, so...low prio
 
   private
   

@@ -112,7 +112,12 @@ module FastRequire
   end
   
   def self.load filename
-    @@require_locs = Marshal.restore( File.open(filename, 'rb') {|f| f.read} )
+    cached_marshal_data = File.open(filename, 'rb') {|f| f.read}
+    begin
+      @@require_locs = Marshal.restore( cached_marshal_data )
+    rescue ArgumentError
+      @@require_locs= {}
+    end
   end
 
 
