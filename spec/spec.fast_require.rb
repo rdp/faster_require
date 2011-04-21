@@ -1,26 +1,21 @@
 # could also  set this here if desired: $FAST_REQUIRE_DEBUG = true
 
-require 'rubygems' # faster_rubygems, perhaps?
+require 'rubygems'
 require 'sane'
-require 'benchmark'
+require 'benchmark' # Benchmark.realtime
 
-raise 'double faster_require' if defined?($already_using_faster_require) # disallowed, since who knows what version the gem one is...
+raise 'double faster_require' if defined?($already_using_faster_require) # disallowed, since who knows what version the gem one is, and even if it's the same...confusion!
 
-unless RUBY_PLATFORM =~ /java/
+unless RUBY_PLATFORM =~ /java/ # ??
  require_relative '../lib/faster_require'
  cached = '.cached_spec_locs' + RUBY_VERSION
  # use it for our own local test specs
- begin
-   require 'spec/autorun'
- rescue LoadError
-  # rspec 2
-  require 'rspec'
- end
+ require 'rspec'
  FastRequire.load cached if File.exist? cached
  FastRequire.save cached
 else
-  require 'spec/autorun'
-  require_relative '../lib/faster_require'
+ require 'rspec'
+ require_relative '../lib/faster_require'
 end
 
 describe "requires faster!" do
