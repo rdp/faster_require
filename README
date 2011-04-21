@@ -58,16 +58,23 @@ Note: in reality what we should do is fix core so that it doesn't have such awfu
 
 Also it helps with SSD's even, on windows, as it avoids some cpu used at require time, at least for 1.9.x
 
-NB that installing newer versions of rubygems also seems to significantly speedup start time (see below for how you can use them both together, however).  In fact, 1.8.7 with newer rubygems seems pretty fast for the rubygems startup (rails still isn't, though, and 1.9 isn't though, even with newer rubygems, so you'll get some benefit from this library still, of if you have a script that requires several gems, this may help--profile it and find out for yourself).
+NB that installing newer versions of rubygems also seems to speedup start time (see below for how you can use them both, however, which is the best way).  
+In fact, 1.8.7 with newer rubygems and only very few requires seems pretty fast, even without faster_require.
+Once you have any number of requires, though, you'll want faster_require.
+Rails needs it, and 1.9 still needs it, though, even with a newer rubygems, 
+so you'll get some benefit from this library always--but don't take my word for it,
+profile it and find out for yourself.
 
 == How to use ==
 
-In general, you can either use it by installing the gem, then adding
+The naive we is to use it by installing the gem, then adding
+
 require 'rubygems'
 require 'faster_require'
-to the top of your script.
 
-However this doesn't speedup the loading of rubygems, so you can do this to get best performance:
+to the top of some (your initial) script.
+
+However this doesn't speedup the loading of rubygems itself (XXX is much speedup?), so you can do this to get best performance:
 
 G:>gem which faster_require
 C:/installs/Ruby187/lib/ruby/gems/1.8/gems/faster_require-0.7.4/lib/faster_require.rb

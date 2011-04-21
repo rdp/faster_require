@@ -1,16 +1,15 @@
-
-# check for double load...because we're afraid to load twice, since we override require et al
+# check for and avoid a double load...because we're afraid to load twice, since we override require et al
 
 if(defined?($already_using_faster_require))
   p 'warning: faster_require double load--expected?' if $FAST_REQUIRE_DEBUG
   local_version = File.read(File.dirname(__FILE__) + "/../VERSION")
   raise "mismatched faster_require versions! #{local_version} != #{FastRequire::VERSION}" unless local_version == FastRequire::VERSION
 else
+  
 $already_using_faster_require = true
 
 
-
-require 'rbconfig' # maybe could cache this one's, too? probably not...
+require 'rbconfig' # maybe could cache this one's loc, too? probably not...
 
 module FastRequire
   
@@ -65,7 +64,15 @@ module FastRequire
     
     # try to be a unique, but not too long, filename, for restrictions on filename length in doze
     ruby_bin_name = config['bindir'] + config['ruby_install_name'] # needed if you have two rubies, same box, same ruby description [version, patch number]
-    parts = [File.basename($0), RUBY_PATCHLEVEL.to_s, RUBY_PLATFORM, RUBY_VERSION, RUBY_VERSION, File.basename(Dir.pwd), Dir.pwd, File.dirname($0), File.expand_path(File.dirname($0)), ruby_bin_name]
+    parts = [File.basename($0), RUBY_PATCHLEVEL.to_s, RUBY_PLATFORM, RUBY_VERSION, RUBY_VERSION, File.expand_path(File.dirname($0)), ruby_bin_name]
+    unless defined?($faster_require_ignore_pwd_for_cache)
+      # add in Dir.pwd
+      parts << File.basename(Dir.pwd)
+      parts << Dir.pwd
+    else
+      p 'ignoring dirpwd for cached file location' if $FAST_REQUIRE_DEBUG
+    end
+    
     sanitized_parts = parts.map{|part| sanitize(part)}
 
     full_parts_hash = string_array_cruddy_hash(parts).to_s
@@ -73,22 +80,41 @@ module FastRequire
     loc_name = (sanitized_parts.map{|part| part[0..5] + (part[-5..-1] || '')}).join('-') + '-' + full_parts_hash + '.marsh'
     
     @@loc = @@dir + '/' + loc_name
-    @@loc
+    
+    if File.exist?(@@loc)
+      FastRequire.load @@loc
+    else
+      @@require_locs = {}
+    end
+      
+    @@already_loaded = {}
+  
+    $LOADED_FEATURES.each{|already_loaded|
+      # in 1.8 they might be partial paths
+      # in 1.9, they might be non collapsed paths
+      # so we have to sanitize them here...
+      # XXXX File.exist? is a bit too loose, here...
+      if File.exist?(already_loaded)
+        key = File.expand_path(already_loaded)
+      else
+        key = FastRequire.guess_discover(already_loaded) || already_loaded
+      end
+      @@already_loaded[key] = true
+    }
+  
+    @@already_loaded[File.expand_path(__FILE__)] = true # this file itself isn't in loaded features, yet, but very soon will be..
+    # a special case--I hope...
+  
+    # also disallow re-loading $0
+    @@require_locs[$0] = File.expand_path($0) # so when we run into $0 on a freak require, we will skip it...
+    @@already_loaded[File.expand_path($0)] = true
+    
   end
-
+  
   def self.load filename
     @@require_locs = Marshal.restore( File.open(filename, 'rb') {|f| f.read} )
   end
-  
-  FastRequire.setup
-  
-  if File.exist?(@@loc)
-    FastRequire.load @@loc
-  else
-    @@require_locs = {}
-  end
 
-  @@already_loaded = {}
 
   # try to see where this file was loaded from, from $:
   # partial_name might be abc.rb, or might be abc
@@ -128,26 +154,8 @@ module FastRequire
       nil
     end
   end
-
-  $LOADED_FEATURES.each{|already_loaded|
-    # in 1.8 they might be partial paths
-    # in 1.9, they might be non collapsed paths
-    # so we have to sanitize them here...
-    # XXXX File.exist? is a bit too loose, here...
-    if File.exist?(already_loaded)
-      key = File.expand_path(already_loaded)
-    else
-      key = FastRequire.guess_discover(already_loaded) || already_loaded
-    end
-    @@already_loaded[key] = true
-  }
-
-  @@already_loaded[File.expand_path(__FILE__)] = true # this file itself isn't in loaded features, yet, but very soon will be..
-  # a special case--I hope...
-
-  # also disallow re-loading $0
-  @@require_locs[$0] = File.expand_path($0) # so when we run into $0 on a freak require, we will skip it...
-  @@already_loaded[File.expand_path($0)] = true
+  
+  FastRequire.setup
   
   def self.already_loaded
     @@already_loaded
@@ -177,6 +185,7 @@ module FastRequire
     File.open(to_file, 'wb'){|f| f.write Marshal.dump(@@require_locs)}
   end
 
+  # for testing use only, basically
   def self.clear_all!
     require 'fileutils'
     success = false
@@ -197,6 +206,7 @@ module FastRequire
   IN_PROCESS = []
   ALL_IN_PROCESS = []
   @@count = 0
+  
   public
   
   def require_cached lib

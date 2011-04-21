@@ -81,10 +81,10 @@ describe "requires faster!" do
   
   it "could cache the file contents, even, too, in theory...oh my"
 
-  it "should not re-save the cache file if it hasn't changed [?]"
+  it "could not re-save the cache file if it hasn't changed [?]"
   
   it "should load .so files still, and only load them once" do
-    # ruby-prof gem
+    # from the ruby-prof gem
     3.times { require 'ruby_prof.so'; RubyProf }
     assert $LOADED_FEATURES.length == (@old_length + 1)
   end
@@ -102,7 +102,7 @@ describe "requires faster!" do
   end
   
   it "should have different caches based on the file being run, and Dir.pwd" do
-   # that wouldn't help much at all for ruby-prof runs, but...we do what we can 
+   # this doesn't use the cache right first time if you, say, profile your script with ruby-prof, but hey.
    assert Dir[FastRequire.dir + '/*'].length == 0 # all clear
    Dir.chdir('files') do
    	  assert system("ruby -I../../lib d.rb")
@@ -112,6 +112,14 @@ describe "requires faster!" do
    assert Dir[FastRequire.dir + '/*'].length == 3    
    assert Dir[FastRequire.dir + '/*d.rb*'].length == 1 # use full path
    assert Dir[FastRequire.dir + '/*e.rb*'].length == 2 # different Dir.pwd's
+  end
+  
+  it "should ignore the pwd setting if you set a certain global variable" do
+    Dir.chdir('files') do
+   	    assert system("ruby -I../../lib file_that_sets_ignore_pwd_flag.rb")
+   	    assert system("ruby -C.. -I../lib files/file_that_sets_ignore_pwd_flag.rb")
+     end
+     assert Dir[FastRequire.dir + '/*file_*'].length == 1 # re-use a cache for the file, despite different Dir.pwd's
   end
     
   it "should work with encoded files too" # most are binary, so...low prio
