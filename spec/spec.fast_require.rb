@@ -7,12 +7,12 @@ require 'benchmark' # Benchmark.realtime
 raise 'double faster_require' if defined?($already_using_faster_require) # disallowed, since who knows what version the gem one is, and even if it's the same...confusion!
 
 unless RUBY_PLATFORM =~ /java/ # ??
- require_relative '../lib/faster_require'
+ #require_relative '../lib/faster_require'
  cached = '.cached_spec_locs' + RUBY_VERSION
  # use it for our own local test specs
  require 'rspec'
- FastRequire.load cached if File.exist? cached
- FastRequire.save cached
+ require_relative '../lib/faster_require'
+# FastRequire.load cached if File.exist? cached
 else
  require 'rspec'
  require_relative '../lib/faster_require'
@@ -200,7 +200,7 @@ describe "requires faster!" do
   # was there some failure like
   # stringio or enumerator.so?
   it "should be able to infer .so files" #do
-#    ruby "files/socket_load.rb" # LODO reproduce failure?
+#    ruby "files/socket_load.rb" # LODO reproduce failure first, from this file?
 #  end
 
 end

@@ -8,4 +8,3 @@ require 'stringio'
 StringIO
 raise 'lacking socket ' + FastRequire.already_loaded.to_a.join(' ') unless FastRequire.already_loaded.to_a.flatten.grep(/socket/).length > 0
 raise 'lacking stringio ' + FastRequire.already_loaded.to_a.join(' ') unless FastRequire.already_loaded.to_a.flatten.grep(/stringio/).length > 0
-p 'success'
