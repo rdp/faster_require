@@ -117,7 +117,6 @@ If you use bundler to change bundled gems, you'll want to run the command $ fast
 so that it will pick up any new load paths.  Also if you moves files around to new directories, you may want to do the same.
 As you install any new gems, it should clear the paths automatically for you.
 
-
 == How to use generally/globally ==
 
 You can install it to be used "always" (well, for anything that loads rubygems, at least, which is most things, via something like the following):
@@ -128,13 +127,30 @@ d:/Ruby192/lib/ruby/site_ruby/1.9.1/rubygems.rb
 $ gem which faster_require
 d:/Ruby192/lib/ruby/gems/1.9.1/gems/faster_require-0.6.0/lib/faster_require.rb
 
-Now edit that rubygems.rb file, and add a require line to the top of it like this:
+Now edit the rubygems.rb file, and add a require line to the top of it of the faster_require file, like this:
+require 'd:/Ruby192/lib/ruby/gems/1.9.1/gems/faster_require-0.6.0/lib/faster_require.rb'
 
-require 'd:/Ruby192/lib/ruby/gems/1.9.1/gems/faster_require-0.6.0/lib/faster_require.rb' 
+at the top of rubygems.rb file
 
-update the path for your own, obviously. You'll also have to change that added line if
+update the path to be your own, obviously. You'll also have to change that added line if
 you ever install a newer version of faster_require gem, or if you update your version of rubygems, 
 as the rubygems.rb file will be wiped clean at that point.
+
+This will cause everything to load faster.
+
+== How to ignore PWD for faster_require ==
+
+Faster_require also takes into consideration your Dir.pwd when you run it, for cacheing sake.
+This means that if you run a ruby gem install script (like redcar's bin/redcar, for instance) and run it from different directories, it will always
+be slow the first time you run it in each directory.
+To make it be fast and basically disregard PWD, you can add global setting $faster_require_ignore_pwd_for_cache = true
+and set it before requiring faster_require itself.
+
+So not rubygems.rb at the top would look like
+$faster_require_ignore_pwd_for_cache = true
+require 'd:/Ruby192/lib/ruby/gems/1.9.1/gems/faster_require-0.6.0/lib/faster_require.rb'
+
+And now your gem scripts will run fast regardless of where you run them from.
 
 == See also ==
 
