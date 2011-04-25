@@ -132,7 +132,7 @@ describe "requires faster!" do
   
   def ruby filename
     command = @ruby + " " + filename
-    3.times { raise command unless system(command) }    
+    3.times { |n| raise command + " failed #{n}th time with zero as first" unless system(command) }    
   end
   
   it "should override rubygems' require if rubygems is loaded after the fact...maybe by hooking to Gem::const_defined or something" do
@@ -195,6 +195,10 @@ describe "requires faster!" do
     Dir.chdir('files') do
       ruby 'fast2.rb'
     end
+  end
+  
+  it "should work for gems that tweak the load path, within themselves [boo]" do
+    ruby 'files/regin_gem.rb'
   end
   
   # was there some failure like
