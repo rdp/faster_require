@@ -245,7 +245,10 @@ module FastRequire
                 no_suffix_lib = lib.gsub(/\.[^.]+$/, '')
                 libs_path = no_suffix_full_path.gsub(no_suffix_lib, '')
                 libs_path = File.expand_path(libs_path) # strip off trailing '/'
-                $: << libs_path unless $:.index(libs_path) # might not need this anymore, but it feels more sane...does it slow us down, though?
+                
+                $: << libs_path unless $:.index(libs_path) # add in this ones real require path, so that neighboring autoloads will work
+                known_locs_dir = File.dirname(known_loc)
+                $: << known_locs_dir unless $:.index(known_locs_dir) # attempt to avoid the regin loading bug...yipes.
                 
                 # try some more autoload conivings...so that it won't attempt to autoload if it runs into it later...
                 relative_full_path = known_loc.sub(libs_path, '')[1..-1]

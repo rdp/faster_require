@@ -197,7 +197,7 @@ describe "requires faster!" do
     end
   end
   
-  it "should work for gems that tweak the load path, within themselves [boo]" do
+  it "should work for gems that tweak the load path, from within themselves, for their own autoload [boo]" do
     ruby 'files/regin_gem.rb'
   end
   
