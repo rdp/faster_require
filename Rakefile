@@ -1,10 +1,8 @@
 require 'rubygems'
 
-begin
-  require 'psych' # sigh
-rescue ::LoadError
-end
-  require 'jeweler'
+#NB that releasing with 1.9.x is ill advised...
+
+require 'jeweler'
   Jeweler::Tasks.new do |s|
     s.name = "faster_require"
     s.summary = "Speed library loading in Ruby"
