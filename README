@@ -146,7 +146,7 @@ be slow the first time you run it in each directory.
 To make it be fast and basically disregard PWD, you can add global setting $faster_require_ignore_pwd_for_cache = true
 and set it before requiring faster_require itself.
 
-So not rubygems.rb at the top would look like
+So now rubygems.rb at the top would look like
 $faster_require_ignore_pwd_for_cache = true
 require 'd:/Ruby192/lib/ruby/gems/1.9.1/gems/faster_require-0.6.0/lib/faster_require.rb'
 
@@ -154,7 +154,7 @@ And now your gem scripts will run fast regardless of where you run them from.
 
 == See also ==
 
-Spork can help speedup rails tests.  I "should" work well when used in conjunction with faster_require, as well.
+Spork can help speedup rails tests.  It "should" work well when used in conjunction with faster_require, as well.
 
 
 Enjoy.
