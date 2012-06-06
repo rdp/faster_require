@@ -156,5 +156,9 @@ And now your gem scripts will run fast regardless of where you run them from.
 
 Spork can help speedup rails tests.  It "should" work well when used in conjunction with faster_require, as well.
 
+Also "The Code Shop" releases versions of ruby that have an optimized require method, which might make this library obsolete.
+http://thecodeshop.github.com
+https://groups.google.com/group/thecodeshop
+http://itreallymatters.net/post/12897174267/speedup-ruby-1-9-3-on-windows#.T89_XtVYut0
 
 Enjoy.
