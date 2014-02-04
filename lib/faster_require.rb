@@ -261,7 +261,7 @@ module FastRequire
                 if contents =~ /require_relative/ # =~ is faster apparently faster than .include?
                   load(known_loc, false) # load is slow, but overcomes a ruby core bug: http://redmine.ruby-lang.org/issues/4487
                 else
-                  Kernel.eval(contents, TOPLEVEL_BINDING, known_loc) # note the 'rb' here--this means it's reading .rb files as binary, which *typically* works...maybe unnecessary though?
+                  eval(contents, TOPLEVEL_BINDING, known_loc)
                 end
               ensure
                 raise 'unexpected' unless IN_PROCESS.pop == known_loc

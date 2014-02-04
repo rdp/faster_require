@@ -1,5 +1,9 @@
-0.9.3: work with some UTF-8 encoded .rb files...which is the default now so hopefully ok.
-
+0.9.4: work with some UTF-8 encoded .rb files...which is the default now so hopefully ok.
+  1.9.x compat. only [ping me if you want this changed]
+  
+0.9.3:
+  possibly an execsjs fix?
+  
 0.9.1: work with rails 3.0.7 through a kludgey way...
 
 0.9.0: refactors, bug fix for poor file, can autoload disregarding dir now 
