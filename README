@@ -1,3 +1,5 @@
+http://rubygems.org/gems/faster_require
+
 A little utility to make load time faster, especially by making
 
 require 'xxx'
