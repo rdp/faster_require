@@ -2,3 +2,19 @@
 require 'faster_require'
 FastRequire.clear_all!
 puts 'successfully cleared faster_require cache: (' + FastRequire.dir + ')'
+
+if ARGV.first == 'edit'
+  rg = $".grep(/rubygems.rb/).first
+  fr = $".grep(/faster_require.rb/).first
+  bk = File.dirname(rg) + '/rubygems~.rb'
+  if File.file? bk
+    File.rename bk, rg
+    puts 'rubygems.rb restored'
+  else
+    File.rename rg, bk
+    rd = IO.read bk
+    sg = sprintf "require '%s'\n%s", fr, rd
+    IO.write rg, sg
+    puts 'rubygems.rb edited'
+  end
+end
